@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Asset Labels — KOEL</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23181c22'/><g fill='%239ccc4a'><rect x='6' y='8' width='2' height='16'/><rect x='10' y='8' width='1' height='16'/><rect x='13' y='8' width='3' height='16'/><rect x='18' y='8' width='1' height='16'/><rect x='21' y='8' width='2' height='16'/><rect x='25' y='8' width='1' height='16'/></g></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23022d62'/><g fill='%232378d1'><rect x='6' y='8' width='2' height='16'/><rect x='10' y='8' width='1' height='16'/><rect x='13' y='8' width='3' height='16'/><rect x='18' y='8' width='1' height='16'/><rect x='21' y='8' width='2' height='16'/><rect x='25' y='8' width='1' height='16'/></g></svg>">
 <style>
   :root {
     --bg:#eef0f3; --glow:#ffffff; --card:#fff; --line:#dfe3e8; --line-soft:#eaedf1;
     --ink:#12151a; --ink-2:#454d59; --muted:#79818e;
-    --accent:#4d8c22; --accent-ink:#fff; --accent-soft:#eef7e3;
+    --accent:#1a67b8; --accent-ink:#fff; --accent-soft:#e4eefb;
     --err:#c0392b; --ok:#1a7f37; --warn:#8a6100;
     --shadow:0 1px 2px rgba(16,20,26,.06), 0 8px 24px -8px rgba(16,20,26,.14);
   }
@@ -17,7 +17,7 @@
     :root {
       --bg:#0e1116; --glow:#1a2028; --card:#171c23; --line:#2b323c; --line-soft:#222831;
       --ink:#e8ebef; --ink-2:#b6bdc7; --muted:#818b98;
-      --accent:#9ccc4a; --accent-ink:#12200a; --accent-soft:#1d2a15;
+      --accent:#4d9fe8; --accent-ink:#06182b; --accent-soft:#12253a;
       --err:#ff6b5e; --ok:#4ac26b; --warn:#d4a72c;
       --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px -10px rgba(0,0,0,.6);
     }
@@ -34,9 +34,13 @@
   .wrap { max-width:1040px; margin:0 auto; }
 
   header { display:flex; align-items:center; gap:12px; padding:26px 0 22px; flex-wrap:wrap; }
-  /* Fixed dark chip in both themes — var(--ink) would flip it to near-white in dark mode. */
-  .mark { width:34px; height:34px; border-radius:9px; background:#181c22; display:grid; place-items:center; flex:0 0 auto; }
-  .mark svg { display:block; }
+  /* The wordmark is navy on transparent, which would vanish against the dark
+     theme — so it always sits on its own white plate. */
+  .mark { background:#fff; border-radius:8px; padding:7px 10px; flex:0 0 auto;
+          box-shadow:0 1px 2px rgba(16,20,26,.14); }
+  .mark img { display:block; height:26px; width:auto; }
+  .rule { width:1px; height:26px; background:var(--line); flex:0 0 auto; }
+  @media (max-width:520px) { .rule { display:none; } }
   h1 { font-size:17px; font-weight:650; margin:0; letter-spacing:-.01em; }
   .tag { font-size:12.5px; color:var(--muted); margin-top:1px; }
   header .spacer { flex:1; }
@@ -121,15 +125,8 @@
 <div class="wrap">
 
   <header>
-    <div class="mark">
-      <svg width="19" height="19" viewBox="0 0 32 32" aria-hidden="true">
-        <g fill="#9ccc4a">
-          <rect x="6" y="7" width="2" height="18"/><rect x="10" y="7" width="1" height="18"/>
-          <rect x="13" y="7" width="3" height="18"/><rect x="18" y="7" width="1" height="18"/>
-          <rect x="21" y="7" width="2" height="18"/><rect x="25" y="7" width="1" height="18"/>
-        </g>
-      </svg>
-    </div>
+    <div class="mark"><img src="koel-logo.png" alt="KOEL" width="82" height="26"></div>
+    <div class="rule"></div>
     <div>
       <h1>Asset Labels</h1>
       <div class="tag">57 × 31 mm · Code 39 · Zebra ZD500R</div>
