@@ -69,6 +69,29 @@ export function validate({ article, description, serial, stripS }) {
   return { errors, art, sn, snBar, artFit, snFit };
 }
 
+// Splits a pasted batch into serials. Accepts comma, semicolon, newline, tab or
+// spaces as separators, so pasting from Excel or a scanner both work. Device
+// serials never contain spaces, so treating them as separators is safe here.
+export function parseSerials(text) {
+  return String(text == null ? '' : text).split(/[\s,;]+/).filter(Boolean);
+}
+
+// Serials that appear more than once — scanning the same phone twice is easy to do.
+export function findDuplicates(serials) {
+  const seen = new Set(), dupes = new Set();
+  for (const s of serials.map((x) => x.toUpperCase())) {
+    if (seen.has(s)) dupes.add(s);
+    seen.add(s);
+  }
+  return [...dupes];
+}
+
+// One ZPL stream holding every label — a single request instead of one per serial,
+// so a batch can't half-print if the network hiccups partway through.
+export function buildBatch({ serials, ...common }) {
+  return serials.map((serial) => buildZpl({ ...common, serial })).join('');
+}
+
 export function buildZpl({ article, description, serial, stripS = true, copies = 1, darkness }) {
   const { errors, art, snBar, artFit, snFit } = validate({ article, description, serial, stripS });
   if (errors.length) throw new Error(errors.join(' '));
@@ -109,10 +132,14 @@ const C39 = {
 
 // Zebra font 0 is Swiss 721 — a Helvetica clone — so measuring in Helvetica
 // gives a close read on where the printer's ^FB will actually break the line.
-const measure = (() => {
-  const ctx = document.createElement('canvas').getContext('2d');
-  return (text, px) => { ctx.font = `bold ${px}px Helvetica, Arial, sans-serif`; return ctx.measureText(text).width; };
-})();
+// Built on first use, not at import — keeps everything above this line runnable
+// outside a browser (tests), where there is no document.
+let _ctx = null;
+function measure(text, px) {
+  _ctx = _ctx || document.createElement('canvas').getContext('2d');
+  _ctx.font = `bold ${px}px Helvetica, Arial, sans-serif`;
+  return _ctx.measureText(text).width;
+}
 
 // Word wrap like ZPL's ^FB: break on spaces, hard-break words that don't fit.
 function wrap(text, maxPx, px, maxLines) {

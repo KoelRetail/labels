@@ -18,11 +18,14 @@
   .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:20px; }
   label { display:block; font-size:13px; font-weight:600; margin:14px 0 5px; }
   label:first-child { margin-top:0; }
-  input[type=text], input[type=number] {
+  input[type=text], input[type=number], textarea {
     width:100%; padding:9px 11px; font-size:15px; font-family:inherit;
     border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--ink);
   }
-  input:focus { outline:2px solid var(--accent); outline-offset:-1px; border-color:transparent; }
+  textarea { resize:vertical; min-height:44px; font-family:ui-monospace, Menlo, monospace; font-size:14px; }
+  input:focus, textarea:focus { outline:2px solid var(--accent); outline-offset:-1px; border-color:transparent; }
+  .warn { color:#9a6700; }
+  @media (prefers-color-scheme: dark) { .warn { color:#d4a72c; } }
   .row { display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap; margin-top:14px; }
   .chk { display:flex; align-items:center; gap:7px; font-size:13px; color:var(--muted); }
   .chk input { width:16px; height:16px; }
@@ -58,12 +61,14 @@
     <label for="description">Description</label>
     <input type="text" id="description" autocomplete="off">
 
-    <label for="serial">Serial number</label>
-    <input type="text" id="serial" autocomplete="off">
+    <label for="serial">Serial number(s)</label>
+    <textarea id="serial" rows="2" autocomplete="off" spellcheck="false"
+      placeholder="Eén serienummer, of meerdere gescheiden door een komma of enter"></textarea>
+    <div class="hint" id="snInfo"></div>
 
     <div class="row">
       <div>
-        <label for="copies" style="margin:0 0 5px">Aantal</label>
+        <label for="copies" style="margin:0 0 5px">Per stuk</label>
         <input type="number" id="copies" value="1" min="1" max="50" style="width:80px">
       </div>
       <div><label class="chk"><input type="checkbox" id="stripS" checked> Leidende “S” uit serienummer halen</label></div>
@@ -76,7 +81,7 @@
   </div>
 
   <div class="preview">
-    <h2>Voorbeeld (1:1 op 203 dpi)</h2>
+    <h2>Voorbeeld (1:1 op 203 dpi) <span id="previewNote"></span></h2>
     <div class="paper"><svg id="lbl" viewBox="0 0 456 248"></svg></div>
   </div>
 
@@ -92,18 +97,20 @@
 </div>
 
 <script type="module">
-import { buildZpl, renderPreview } from './label.js';
+import { buildZpl, buildBatch, renderPreview, parseSerials, findDuplicates, validate } from './label.js';
 import { sendToPrinter } from './print.js';
 
 const DEFAULT_HOST = '10.2.10.26';
 const $ = (id) => document.getElementById(id);
 const getHost = () => localStorage.getItem('printerHost') || DEFAULT_HOST;
+const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
 
 function form() {
+  const serials = parseSerials($('serial').value);
   return {
     article: $('article').value,
     description: $('description').value,
-    serial: $('serial').value,
+    serials,
     stripS: $('stripS').checked,
     copies: $('copies').value,
   };
@@ -114,28 +121,68 @@ function say(text, cls) {
   $('msg').className = cls || '';
 }
 
+// Every serial must be printable before we send anything — a batch that fails
+// halfway would leave you guessing which phones already have a label.
+function checkBatch({ serials, ...common }) {
+  const bad = [];
+  for (const serial of serials) {
+    const { errors } = validate({ ...common, serial });
+    // Article errors repeat for every serial; only collect what's serial-specific.
+    const own = errors.filter((e) => !e.startsWith('Article'));
+    if (own.length) bad.push(`${serial}: ${own.join(' ')}`);
+  }
+  return bad;
+}
+
 function render() {
-  const { svg, tooLong } = renderPreview(form());
+  const f = form();
+  const first = f.serials[0] || '';
+  const { svg, tooLong } = renderPreview({ ...f, serial: first });
   $('lbl').innerHTML = svg;
+
+  const n = f.serials.length;
+  const copies = Math.max(1, parseInt(f.copies, 10) || 1);
+  const total = n * copies;
+  $('printBtn').textContent = total > 1 ? `Print ${plural(total, 'label')}` : 'Print Label';
+  $('previewNote').textContent = n > 1 ? `— eerste van ${n}: ${first}` : '';
+
+  const dupes = findDuplicates(f.serials);
+  const bad = checkBatch(f);
+  const info = [];
+  if (n > 1) info.push(`${plural(n, 'serienummer')}${copies > 1 ? ` × ${copies} = ${plural(total, 'label')}` : ''}`);
+  $('snInfo').textContent = info.join(' · ');
+
   if (tooLong.length) say(`${tooLong.join(' en ')} te lang voor de barcode — korter maken.`, 'err');
-  else if ($('msg').className === 'err') say('');
+  else if (bad.length) say(`Werkt niet: ${bad.slice(0, 3).join(' | ')}${bad.length > 3 ? ` (+${bad.length - 3} meer)` : ''}`, 'err');
+  else if (dupes.length) say(`Let op — dubbel ingevoerd: ${dupes.join(', ')}. Die krijgen elk twee labels.`, 'warn');
+  else if ($('msg').className) say('');
+}
+
+function zplFor(f) {
+  if (!f.serials.length) throw new Error('Serial number is leeg.');
+  const bad = checkBatch(f);
+  if (bad.length) throw new Error(bad.join(' | '));
+  return buildBatch(f);
 }
 
 $('printBtn').onclick = async () => {
+  const f = form();
   let zpl;
   try {
-    zpl = buildZpl(form());
+    zpl = zplFor(f);
   } catch (e) {
     return say(e.message, 'err');
   }
+  const total = f.serials.length * Math.max(1, parseInt(f.copies, 10) || 1);
   $('printBtn').disabled = true;
   say('Versturen…');
   try {
     await sendToPrinter(zpl, getHost());
     // The response is opaque, so this is "sent", not "printed" — say so honestly.
-    say('Verstuurd — kijk of het label uit de printer komt.', 'ok');
-    $('article').focus();
-    $('article').select();
+    say(`${plural(total, 'label')} verstuurd — kijk of ze uit de printer komen.`, 'ok');
+    $('serial').value = '';
+    $('serial').focus();
+    render();
   } catch (e) {
     say(`Kon de printer niet bereiken (${e.message}). Zit je op het kantoornetwerk? Sta lokale netwerktoegang toe als Chrome erom vraagt.`, 'err');
   } finally {
@@ -145,7 +192,7 @@ $('printBtn').onclick = async () => {
 
 $('zplBtn').onclick = () => {
   try {
-    alert(buildZpl(form()));
+    alert(zplFor(form()));
   } catch (e) {
     say(e.message, 'err');
   }
@@ -162,7 +209,15 @@ $('saveHost').onclick = () => {
 document.addEventListener('input', render);
 document.addEventListener('change', render);
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.id !== 'host') $('printBtn').click();
+  if (e.key !== 'Enter') return;
+  // A barcode scanner ends every scan with Enter, so inside the serial box Enter
+  // must start a new line — that's what lets you scan a whole box of phones in a
+  // row. Cmd/Ctrl+Enter prints from there instead.
+  if (e.target.id === 'serial') {
+    if (e.metaKey || e.ctrlKey) $('printBtn').click();
+    return;
+  }
+  if (e.target.tagName === 'INPUT' && e.target.id !== 'host') $('printBtn').click();
 });
 
 ['article', 'description', 'serial'].forEach((id) => ($(id).value = ''));
