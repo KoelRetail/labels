@@ -4,96 +4,199 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Asset Labels — KOEL</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23181c22'/><g fill='%239ccc4a'><rect x='6' y='8' width='2' height='16'/><rect x='10' y='8' width='1' height='16'/><rect x='13' y='8' width='3' height='16'/><rect x='18' y='8' width='1' height='16'/><rect x='21' y='8' width='2' height='16'/><rect x='25' y='8' width='1' height='16'/></g></svg>">
 <style>
-  :root { --bg:#f4f5f7; --card:#fff; --line:#d8dbe0; --ink:#1c1f23; --muted:#6b7280; --accent:#1f6feb; --err:#c0392b; --ok:#1a7f37; }
+  :root {
+    --bg:#eef0f3; --glow:#ffffff; --card:#fff; --line:#dfe3e8; --line-soft:#eaedf1;
+    --ink:#12151a; --ink-2:#454d59; --muted:#79818e;
+    --accent:#4d8c22; --accent-ink:#fff; --accent-soft:#eef7e3;
+    --err:#c0392b; --ok:#1a7f37; --warn:#8a6100;
+    --shadow:0 1px 2px rgba(16,20,26,.06), 0 8px 24px -8px rgba(16,20,26,.14);
+  }
   @media (prefers-color-scheme: dark) {
-    :root { --bg:#15181d; --card:#1e2229; --line:#343a44; --ink:#e6e8eb; --muted:#9aa3af; --accent:#4c8dff; --err:#ff6b5e; --ok:#4ac26b; }
+    :root {
+      --bg:#0e1116; --glow:#1a2028; --card:#171c23; --line:#2b323c; --line-soft:#222831;
+      --ink:#e8ebef; --ink-2:#b6bdc7; --muted:#818b98;
+      --accent:#9ccc4a; --accent-ink:#12200a; --accent-soft:#1d2a15;
+      --err:#ff6b5e; --ok:#4ac26b; --warn:#d4a72c;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px -10px rgba(0,0,0,.6);
+    }
   }
-  * { box-sizing: border-box; }
-  body { margin:0; padding:28px 20px 60px; background:var(--bg); color:var(--ink);
-         font:15px/1.45 -apple-system, "Segoe UI", system-ui, sans-serif; }
-  .wrap { max-width: 780px; margin: 0 auto; }
-  h1 { font-size:20px; margin:0 0 4px; }
-  .sub { color:var(--muted); font-size:13px; margin-bottom:20px; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:20px; }
-  label { display:block; font-size:13px; font-weight:600; margin:14px 0 5px; }
-  label:first-child { margin-top:0; }
+  * { box-sizing:border-box; }
+  html { -webkit-text-size-adjust:100%; }
+  body {
+    margin:0; padding:0 20px 72px; min-height:100vh; color:var(--ink);
+    background:var(--bg);
+    background-image:radial-gradient(1200px 500px at 50% -220px, var(--glow), transparent 70%);
+    font:15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap { max-width:1040px; margin:0 auto; }
+
+  header { display:flex; align-items:center; gap:12px; padding:26px 0 22px; flex-wrap:wrap; }
+  /* Fixed dark chip in both themes — var(--ink) would flip it to near-white in dark mode. */
+  .mark { width:34px; height:34px; border-radius:9px; background:#181c22; display:grid; place-items:center; flex:0 0 auto; }
+  .mark svg { display:block; }
+  h1 { font-size:17px; font-weight:650; margin:0; letter-spacing:-.01em; }
+  .tag { font-size:12.5px; color:var(--muted); margin-top:1px; }
+  header .spacer { flex:1; }
+  .pill {
+    display:inline-flex; align-items:center; gap:7px; padding:5px 11px; border-radius:999px;
+    border:1px solid var(--line); background:var(--card); font-size:12.5px; color:var(--ink-2);
+  }
+  .pill b { font-weight:600; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12px; }
+  .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); flex:0 0 auto; }
+
+  .grid { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:22px; align-items:start; }
+  @media (max-width:900px) { .grid { grid-template-columns:1fr; } }
+
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); }
+  .card-body { padding:22px; }
+
+  label.field { display:block; font-size:11px; font-weight:650; letter-spacing:.05em; text-transform:uppercase;
+                color:var(--muted); margin:0 0 6px; }
+  .field-wrap + .field-wrap { margin-top:16px; }
   input[type=text], input[type=number], textarea {
-    width:100%; padding:9px 11px; font-size:15px; font-family:inherit;
-    border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--ink);
+    width:100%; padding:11px 13px; font-size:15px; font-family:inherit; color:var(--ink);
+    border:1px solid var(--line); border-radius:9px; background:var(--bg); transition:border-color .12s, box-shadow .12s;
   }
-  textarea { resize:vertical; min-height:44px; font-family:ui-monospace, Menlo, monospace; font-size:14px; }
-  input:focus, textarea:focus { outline:2px solid var(--accent); outline-offset:-1px; border-color:transparent; }
-  .warn { color:#9a6700; }
-  @media (prefers-color-scheme: dark) { .warn { color:#d4a72c; } }
-  .row { display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap; margin-top:14px; }
-  .chk { display:flex; align-items:center; gap:7px; font-size:13px; color:var(--muted); }
-  .chk input { width:16px; height:16px; }
-  button { padding:10px 20px; font-size:15px; font-weight:600; font-family:inherit;
-           border:0; border-radius:6px; background:var(--accent); color:#fff; cursor:pointer; }
-  button:hover { filter:brightness(1.1); }
-  button:disabled { opacity:.5; cursor:default; }
-  button.ghost { background:transparent; color:var(--muted); border:1px solid var(--line); }
-  .preview { margin-top:22px; }
-  .preview h2 { font-size:13px; font-weight:600; color:var(--muted); margin:0 0 8px; }
-  .paper { background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px;
-           display:inline-block; box-shadow:0 1px 4px rgba(0,0,0,.12); }
-  .paper svg { display:block; width:456px; max-width:100%; height:auto; }
-  #msg { margin-top:16px; font-size:14px; min-height:20px; }
-  #msg.err { color:var(--err); }
-  #msg.ok { color:var(--ok); }
-  code { font-family:ui-monospace, Menlo, monospace; font-size:12px; }
-  details { margin-top:18px; }
-  summary { font-size:13px; color:var(--muted); cursor:pointer; }
-  details .card { margin-top:10px; }
+  textarea { resize:vertical; min-height:52px; line-height:1.55;
+             font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:13.5px; }
+  input::placeholder, textarea::placeholder { color:var(--muted); opacity:.75; }
+  input:focus, textarea:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
   .hint { font-size:12px; color:var(--muted); margin-top:6px; }
+
+  .bar { display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+         margin-top:20px; padding-top:18px; border-top:1px solid var(--line-soft); }
+  .qty { display:flex; align-items:center; gap:9px; }
+  .qty label { font-size:12.5px; color:var(--muted); }
+  .qty input { width:62px; padding:7px 9px; text-align:center; }
+  .chk { display:inline-flex; align-items:center; gap:8px; font-size:12.5px; color:var(--ink-2); cursor:pointer; user-select:none; }
+  .chk input { width:15px; height:15px; accent-color:var(--accent); cursor:pointer; }
+  .bar .spacer { flex:1; }
+  /* Keep the two buttons together — without this the bar wraps between them. */
+  .btns { display:flex; gap:10px; flex:0 0 auto; }
+
+  button {
+    font:inherit; font-size:14px; font-weight:600; border:0; border-radius:9px; cursor:pointer;
+    padding:11px 20px; background:var(--accent); color:var(--accent-ink); transition:filter .12s, transform .06s;
+  }
+  button:hover:not(:disabled) { filter:brightness(1.07); }
+  button:active:not(:disabled) { transform:translateY(1px); }
+  button:disabled { opacity:.45; cursor:default; }
+  button.ghost { background:transparent; color:var(--muted); border:1px solid var(--line); padding:10px 14px; }
+  button.ghost:hover { color:var(--ink); border-color:var(--muted); }
+  kbd { font:600 10.5px ui-monospace, Menlo, monospace; border:1px solid var(--line); border-bottom-width:2px;
+        border-radius:4px; padding:1px 4px; color:var(--muted); background:var(--bg); }
+
+  #msg { min-height:20px; margin-top:14px; font-size:13.5px; display:flex; gap:7px; align-items:flex-start; }
+  #msg:empty { display:none; }
+  #msg.ok { color:var(--ok); }
+  #msg.err { color:var(--err); }
+  #msg.warn { color:var(--warn); }
+
+  /* Preview: a sticker on its liner, so it reads as a physical label. */
+  aside { position:sticky; top:22px; }
+  @media (max-width:900px) { aside { position:static; } }
+  .liner { background:#efe9d2; border-radius:12px; padding:13px; box-shadow:var(--shadow);
+           background-image:repeating-linear-gradient(45deg, rgba(0,0,0,.03) 0 2px, transparent 2px 5px); }
+  .sticker { background:#fff; border-radius:7px; padding:9px; box-shadow:0 1px 3px rgba(0,0,0,.22); }
+  .sticker svg { display:block; width:456px; max-width:100%; height:auto; }
+  @media (max-width:560px) { .sticker svg { width:100%; } }
+  .cap { display:flex; justify-content:space-between; gap:10px; margin:0 2px 8px;
+         font-size:11px; font-weight:650; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
+  #previewNote { text-transform:none; letter-spacing:0; font-weight:500; }
+
+  details { margin-top:20px; }
+  summary { font-size:12.5px; color:var(--muted); cursor:pointer; width:fit-content; }
+  summary:hover { color:var(--ink); }
+  details .card { margin-top:12px; }
+  details .bar { margin-top:16px; }
+  footer { margin-top:26px; font-size:12.5px; color:var(--muted); line-height:1.7; }
+  footer b { color:var(--ink-2); font-weight:600; }
+  a { color:inherit; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Asset Labels</h1>
-  <div class="sub">57 × 31 mm · Code 39 · Zebra ZD500R op <code id="cfgHost">—</code></div>
 
-  <div class="card">
-    <label for="article">Article</label>
-    <input type="text" id="article" autocomplete="off" autofocus>
-
-    <label for="description">Description</label>
-    <input type="text" id="description" autocomplete="off">
-
-    <label for="serial">Serial number(s)</label>
-    <textarea id="serial" rows="2" autocomplete="off" spellcheck="false"
-      placeholder="Eén serienummer, of meerdere gescheiden door een komma of enter"></textarea>
-    <div class="hint" id="snInfo"></div>
-
-    <div class="row">
-      <div>
-        <label for="copies" style="margin:0 0 5px">Per stuk</label>
-        <input type="number" id="copies" value="1" min="1" max="50" style="width:80px">
-      </div>
-      <div><label class="chk"><input type="checkbox" id="stripS" checked> Leidende “S” uit serienummer halen</label></div>
-      <div style="flex:1"></div>
-      <div><button class="ghost" id="zplBtn" type="button">ZPL tonen</button></div>
-      <div><button id="printBtn" type="button">Print Label</button></div>
+  <header>
+    <div class="mark">
+      <svg width="19" height="19" viewBox="0 0 32 32" aria-hidden="true">
+        <g fill="#9ccc4a">
+          <rect x="6" y="7" width="2" height="18"/><rect x="10" y="7" width="1" height="18"/>
+          <rect x="13" y="7" width="3" height="18"/><rect x="18" y="7" width="1" height="18"/>
+          <rect x="21" y="7" width="2" height="18"/><rect x="25" y="7" width="1" height="18"/>
+        </g>
+      </svg>
     </div>
+    <div>
+      <h1>Asset Labels</h1>
+      <div class="tag">57 × 31 mm · Code 39 · Zebra ZD500R</div>
+    </div>
+    <div class="spacer"></div>
+    <span class="pill"><span class="dot"></span> <b id="cfgHost">—</b></span>
+  </header>
 
-    <div id="msg"></div>
-  </div>
+  <div class="grid">
+    <div class="card"><div class="card-body">
+      <div class="field-wrap">
+        <label class="field" for="article">Article</label>
+        <input type="text" id="article" autocomplete="off" placeholder="25311" autofocus>
+      </div>
 
-  <div class="preview">
-    <h2>Voorbeeld (1:1 op 203 dpi) <span id="previewNote"></span></h2>
-    <div class="paper"><svg id="lbl" viewBox="0 0 456 248"></svg></div>
+      <div class="field-wrap">
+        <label class="field" for="description">Description</label>
+        <input type="text" id="description" autocomplete="off" placeholder="NIKE phone SE 64 GB black">
+      </div>
+
+      <div class="field-wrap">
+        <label class="field" for="serial">Serial number(s)</label>
+        <textarea id="serial" rows="2" autocomplete="off" spellcheck="false"
+          placeholder="Scan of plak meerdere — komma of enter ertussen"></textarea>
+        <div class="hint" id="snInfo"></div>
+      </div>
+
+      <div class="bar">
+        <div class="qty">
+          <label for="copies">Per stuk</label>
+          <input type="number" id="copies" value="1" min="1" max="50">
+        </div>
+        <label class="chk"><input type="checkbox" id="stripS" checked> Leidende “S” eruit</label>
+        <div class="spacer"></div>
+        <div class="btns">
+          <button class="ghost" id="zplBtn" type="button">ZPL</button>
+          <button id="printBtn" type="button">Print Label</button>
+        </div>
+      </div>
+
+      <div id="msg"></div>
+    </div></div>
+
+    <aside>
+      <div class="cap"><span>Voorbeeld · 1:1</span><span id="previewNote"></span></div>
+      <div class="liner"><div class="sticker">
+        <svg id="lbl" viewBox="0 0 456 248"></svg>
+      </div></div>
+    </aside>
   </div>
 
   <details>
     <summary>Instellingen</summary>
-    <div class="card">
-      <label for="host">Printer (IP-adres)</label>
-      <input type="text" id="host" placeholder="10.2.10.26">
-      <div class="hint">Wordt in deze browser onthouden. De printer moet in hetzelfde netwerk zitten als jouw PC.</div>
-      <div class="row"><div><button class="ghost" id="saveHost" type="button">Opslaan</button></div></div>
-    </div>
+    <div class="card"><div class="card-body">
+      <div class="field-wrap">
+        <label class="field" for="host">Printer (IP-adres)</label>
+        <input type="text" id="host" placeholder="10.2.10.26">
+        <div class="hint">Wordt in deze browser onthouden. De printer moet in hetzelfde netwerk zitten als jouw PC.</div>
+      </div>
+      <div class="bar"><div class="spacer"></div><button class="ghost" id="saveHost" type="button">Opslaan</button></div>
+    </div></div>
   </details>
+
+  <footer>
+    <b>Chrome of Edge</b>, op het kantoornetwerk — sta lokale netwerktoegang toe als je erom gevraagd wordt.<br>
+    <kbd>Enter</kbd> in het serienummer-vak = nieuwe regel · <kbd>⌘</kbd><kbd>Enter</kbd> print.
+  </footer>
 </div>
 
 <script type="module">
@@ -106,11 +209,10 @@ const getHost = () => localStorage.getItem('printerHost') || DEFAULT_HOST;
 const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
 
 function form() {
-  const serials = parseSerials($('serial').value);
   return {
     article: $('article').value,
     description: $('description').value,
-    serials,
+    serials: parseSerials($('serial').value),
     stripS: $('stripS').checked,
     copies: $('copies').value,
   };
@@ -134,7 +236,16 @@ function checkBatch({ serials, ...common }) {
   return bad;
 }
 
+// Grow the serial box with its content so a scanned batch stays visible —
+// capped, past which it scrolls rather than pushing the print button off-screen.
+function autoGrow() {
+  const el = $('serial');
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight + 2, 320) + 'px';
+}
+
 function render() {
+  autoGrow();
   const f = form();
   const first = f.serials[0] || '';
   const { svg, tooLong } = renderPreview({ ...f, serial: first });
@@ -144,14 +255,13 @@ function render() {
   const copies = Math.max(1, parseInt(f.copies, 10) || 1);
   const total = n * copies;
   $('printBtn').textContent = total > 1 ? `Print ${plural(total, 'label')}` : 'Print Label';
-  $('previewNote').textContent = n > 1 ? `— eerste van ${n}: ${first}` : '';
+  $('previewNote').textContent = n > 1 ? `eerste van ${n} · ${first}` : '';
+  $('snInfo').textContent = n > 1
+    ? `${plural(n, 'serienummer')}${copies > 1 ? ` × ${copies} = ${plural(total, 'label')}` : ''}`
+    : '';
 
   const dupes = findDuplicates(f.serials);
   const bad = checkBatch(f);
-  const info = [];
-  if (n > 1) info.push(`${plural(n, 'serienummer')}${copies > 1 ? ` × ${copies} = ${plural(total, 'label')}` : ''}`);
-  $('snInfo').textContent = info.join(' · ');
-
   if (tooLong.length) say(`${tooLong.join(' en ')} te lang voor de barcode — korter maken.`, 'err');
   else if (bad.length) say(`Werkt niet: ${bad.slice(0, 3).join(' | ')}${bad.length > 3 ? ` (+${bad.length - 3} meer)` : ''}`, 'err');
   else if (dupes.length) say(`Let op — dubbel ingevoerd: ${dupes.join(', ')}. Die krijgen elk twee labels.`, 'warn');
