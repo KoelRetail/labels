@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Labels — KOEL</title>
+<style>
+  :root { --bg:#f4f5f7; --card:#fff; --line:#d8dbe0; --ink:#1c1f23; --muted:#6b7280; --accent:#1f6feb; --err:#c0392b; --ok:#1a7f37; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#15181d; --card:#1e2229; --line:#343a44; --ink:#e6e8eb; --muted:#9aa3af; --accent:#4c8dff; --err:#ff6b5e; --ok:#4ac26b; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:28px 20px 60px; background:var(--bg); color:var(--ink);
+         font:15px/1.45 -apple-system, "Segoe UI", system-ui, sans-serif; }
+  .wrap { max-width: 780px; margin: 0 auto; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:13px; margin-bottom:20px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:20px; }
+  label { display:block; font-size:13px; font-weight:600; margin:14px 0 5px; }
+  label:first-child { margin-top:0; }
+  input[type=text], input[type=number] {
+    width:100%; padding:9px 11px; font-size:15px; font-family:inherit;
+    border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--ink);
+  }
+  input:focus { outline:2px solid var(--accent); outline-offset:-1px; border-color:transparent; }
+  .row { display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap; margin-top:14px; }
+  .chk { display:flex; align-items:center; gap:7px; font-size:13px; color:var(--muted); }
+  .chk input { width:16px; height:16px; }
+  button { padding:10px 20px; font-size:15px; font-weight:600; font-family:inherit;
+           border:0; border-radius:6px; background:var(--accent); color:#fff; cursor:pointer; }
+  button:hover { filter:brightness(1.1); }
+  button:disabled { opacity:.5; cursor:default; }
+  button.ghost { background:transparent; color:var(--muted); border:1px solid var(--line); }
+  .preview { margin-top:22px; }
+  .preview h2 { font-size:13px; font-weight:600; color:var(--muted); margin:0 0 8px; }
+  .paper { background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px;
+           display:inline-block; box-shadow:0 1px 4px rgba(0,0,0,.12); }
+  .paper svg { display:block; width:456px; max-width:100%; height:auto; }
+  #msg { margin-top:16px; font-size:14px; min-height:20px; }
+  #msg.err { color:var(--err); }
+  #msg.ok { color:var(--ok); }
+  code { font-family:ui-monospace, Menlo, monospace; font-size:12px; }
+  details { margin-top:18px; }
+  summary { font-size:13px; color:var(--muted); cursor:pointer; }
+  details .card { margin-top:10px; }
+  .hint { font-size:12px; color:var(--muted); margin-top:6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Asset Labels</h1>
+  <div class="sub">57 × 31 mm · Code 39 · Zebra ZD500R op <code id="cfgHost">—</code></div>
+
+  <div class="card">
+    <label for="article">Article</label>
+    <input type="text" id="article" autocomplete="off" autofocus>
+
+    <label for="description">Description</label>
+    <input type="text" id="description" autocomplete="off">
+
+    <label for="serial">Serial number</label>
+    <input type="text" id="serial" autocomplete="off">
+
+    <div class="row">
+      <div>
+        <label for="copies" style="margin:0 0 5px">Aantal</label>
+        <input type="number" id="copies" value="1" min="1" max="50" style="width:80px">
+      </div>
+      <div><label class="chk"><input type="checkbox" id="stripS" checked> Leidende “S” uit serienummer halen</label></div>
+      <div style="flex:1"></div>
+      <div><button class="ghost" id="zplBtn" type="button">ZPL tonen</button></div>
+      <div><button id="printBtn" type="button">Print Label</button></div>
+    </div>
+
+    <div id="msg"></div>
+  </div>
+
+  <div class="preview">
+    <h2>Voorbeeld (1:1 op 203 dpi)</h2>
+    <div class="paper"><svg id="lbl" viewBox="0 0 456 248"></svg></div>
+  </div>
+
+  <details>
+    <summary>Instellingen</summary>
+    <div class="card">
+      <label for="host">Printer (IP-adres)</label>
+      <input type="text" id="host" placeholder="10.2.10.26">
+      <div class="hint">Wordt in deze browser onthouden. De printer moet in hetzelfde netwerk zitten als jouw PC.</div>
+      <div class="row"><div><button class="ghost" id="saveHost" type="button">Opslaan</button></div></div>
+    </div>
+  </details>
+</div>
+
+<script type="module">
+import { buildZpl, renderPreview } from './label.js';
+import { sendToPrinter } from './print.js';
+
+const DEFAULT_HOST = '10.2.10.26';
+const $ = (id) => document.getElementById(id);
+const getHost = () => localStorage.getItem('printerHost') || DEFAULT_HOST;
+
+function form() {
+  return {
+    article: $('article').value,
+    description: $('description').value,
+    serial: $('serial').value,
+    stripS: $('stripS').checked,
+    copies: $('copies').value,
+  };
+}
+
+function say(text, cls) {
+  $('msg').textContent = text;
+  $('msg').className = cls || '';
+}
+
+function render() {
+  const { svg, tooLong } = renderPreview(form());
+  $('lbl').innerHTML = svg;
+  if (tooLong.length) say(`${tooLong.join(' en ')} te lang voor de barcode — korter maken.`, 'err');
+  else if ($('msg').className === 'err') say('');
+}
+
+$('printBtn').onclick = async () => {
+  let zpl;
+  try {
+    zpl = buildZpl(form());
+  } catch (e) {
+    return say(e.message, 'err');
+  }
+  $('printBtn').disabled = true;
+  say('Versturen…');
+  try {
+    await sendToPrinter(zpl, getHost());
+    // The response is opaque, so this is "sent", not "printed" — say so honestly.
+    say('Verstuurd — kijk of het label uit de printer komt.', 'ok');
+    $('article').focus();
+    $('article').select();
+  } catch (e) {
+    say(`Kon de printer niet bereiken (${e.message}). Zit je op het kantoornetwerk? Sta lokale netwerktoegang toe als Chrome erom vraagt.`, 'err');
+  } finally {
+    $('printBtn').disabled = false;
+  }
+};
+
+$('zplBtn').onclick = () => {
+  try {
+    alert(buildZpl(form()));
+  } catch (e) {
+    say(e.message, 'err');
+  }
+};
+
+$('saveHost').onclick = () => {
+  const h = $('host').value.trim();
+  if (h) localStorage.setItem('printerHost', h);
+  else localStorage.removeItem('printerHost');
+  $('cfgHost').textContent = getHost();
+  say(`Printer ingesteld op ${getHost()}`, 'ok');
+};
+
+document.addEventListener('input', render);
+document.addEventListener('change', render);
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.id !== 'host') $('printBtn').click();
+});
+
+['article', 'description', 'serial'].forEach((id) => ($(id).value = ''));
+$('host').value = localStorage.getItem('printerHost') || '';
+$('cfgHost').textContent = getHost();
+render();
+</script>
+</body>
+</html>
