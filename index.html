@@ -531,8 +531,166 @@
     footer { padding:0 20px; }
   }
 </style>
+<style id="gate">
+  /* Login + client choice in front of the tool. body.locked hides the tool
+     until a team member is signed in, so nothing flashes on load. */
+  body.locked .wrap, body:not(.locked) #gate { display:none; }
+  #gate { min-height:100vh; display:flex; flex-direction:column; }
+  .gate-top { display:flex; align-items:center; justify-content:space-between; min-height:88px; padding:15px 50px; background:#fff; border-bottom:1px solid #e4e9f1; }
+  .gate-secure { display:flex; align-items:center; gap:10px; color:#52617a; font-size:14px; }
+  .gate-secure svg, .gate-note svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .gate-main { flex:1; width:100%; max-width:1320px; margin:0 auto; padding:44px 30px 36px; }
+  .gate-hero { text-align:center; margin-bottom:30px; }
+  .gate-hero h2 { margin:0; color:var(--navy); font-size:52px; line-height:1.05; font-weight:800; letter-spacing:-.045em; }
+  .gate-hero p { margin:10px 0 0; color:#687790; font-size:19px; }
+  .gate-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .gate-card { padding:30px 34px 32px; background:#fff; border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow-sm); }
+  .gate-card.alt { background:#eef4fd; border-color:#d6e3f5; }
+  .gate-step { color:var(--ui-blue); font:600 15px/1 ui-monospace,SFMono-Regular,Menlo,monospace; }
+  .gate-card h3 { margin:12px 0 4px; color:var(--navy); font-size:34px; line-height:1.15; font-weight:800; letter-spacing:-.035em; }
+  .gate-card > p { margin:0 0 24px; color:#687790; font-size:16px; }
+  .gate-form label.lbl { display:block; margin:0 0 7px; color:var(--navy); font-size:15px; font-weight:600; }
+  .gate-form input[type=email], .gate-form input[type=password], .gate-form input[type=text] {
+    width:100%; height:48px; padding:0 16px; color:var(--ink); background:#fff; border:1px solid var(--line-strong); border-radius:9px; font-size:16px; }
+  .gate-form input:focus { outline:none; border-color:var(--ui-blue); box-shadow:0 0 0 3px rgba(11,98,246,.12); }
+  .gate-field { margin-bottom:18px; }
+  .pw { position:relative; }
+  .pw input { padding-right:52px !important; }
+  .pw button { position:absolute; right:6px; top:6px; width:36px; height:36px; display:grid; place-items:center; border:0; background:none; color:#52617a; cursor:pointer; border-radius:8px; }
+  .pw button svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.8; }
+  .gate-row { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:4px 0 22px; }
+  .remember { display:flex; align-items:center; gap:10px; color:var(--navy); font-size:15px; cursor:pointer; }
+  .remember input { width:20px; height:20px; accent-color:var(--ui-blue); }
+  .linkish { padding:0; border:0; background:none; color:var(--ui-blue); font-size:15px; cursor:pointer; }
+  .linkish:hover { text-decoration:underline; }
+  .gate-primary { width:100%; height:56px; border:0; border-radius:9px; background:var(--ui-blue); color:#fff; font-size:18px; font-weight:600; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:12px; }
+  .gate-primary:hover:not(:disabled) { background:var(--ui-blue-dark); }
+  .gate-primary:disabled { background:#b9cdf3; cursor:not-allowed; }
+  .gate-primary svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  .gate-msg { min-height:22px; margin-top:12px; font-size:14px; color:#52617a; }
+  .gate-msg.err { color:var(--err); }
+  .gate-msg.ok { color:var(--ok); }
+  .signed-in { display:flex; align-items:center; gap:14px; padding:16px 18px; background:#f3fbf6; border:1px solid #cdebd8; border-radius:10px; }
+  .signed-in .tick { display:grid; place-items:center; width:34px; height:34px; border-radius:50%; background:#22b56c; color:#fff; font-size:18px; flex:0 0 auto; }
+  .signed-in div { flex:1; min-width:0; }
+  .signed-in strong { display:block; color:var(--navy); font-size:15px; }
+  .signed-in span { display:block; color:#52617a; font-size:14px; overflow:hidden; text-overflow:ellipsis; }
+  .gate-clients { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .gate-client { position:relative; display:flex; flex-direction:column; align-items:center; gap:2px; padding:22px 14px 18px; background:#fff;
+    border:1px solid var(--line); border-radius:10px; cursor:pointer; color:var(--navy); transition:border-color .15s, box-shadow .15s; }
+  .gate-client:hover:not(:disabled) { border-color:#a9bad2; }
+  .gate-client:disabled { cursor:not-allowed; opacity:.55; }
+  .gate-client .logo { height:54px; display:grid; place-items:center; margin-bottom:8px; }
+  .gate-client .logo img { max-height:54px; max-width:130px; }
+  .gate-client[data-client=nike] .logo img { width:150px; max-width:none; max-height:none; margin:-14px 0; }
+  .gate-client strong { font-size:17px; }
+  .gate-client small { color:#687790; font-size:14px; }
+  .gate-client.active { border:2px solid var(--ui-blue); padding:21px 13px 17px; box-shadow:0 0 0 3px rgba(11,98,246,.08); }
+  .gate-client.active::after { content:"✓"; position:absolute; top:12px; right:12px; width:28px; height:28px; display:grid; place-items:center;
+    border-radius:50%; background:var(--ui-blue); color:#fff; font-size:15px; font-weight:700; }
+  .gate-selected { display:flex; align-items:center; gap:10px; margin:22px 0 20px; color:var(--navy); font-size:16px; }
+  .gate-selected::before { content:""; width:12px; height:12px; border-radius:50%; background:var(--ui-blue); }
+  .gate-note { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:14px; color:#687790; font-size:14px; }
+  #gate .gate-foot { max-width:none; margin:0; display:flex; justify-content:space-between; gap:16px; padding:16px 50px; border-top:1px solid #e4e9f1; color:#52617a; font-size:14px; background:#fff; }
+  .gate-foot b { color:var(--ui-blue); font-weight:500; }
+  .account { display:flex; align-items:center; gap:8px; }
+  .account-btn { height:40px; padding:0 14px; border:1px solid var(--line); border-radius:10px; background:#fbfcfe; color:var(--navy); font-size:13px; font-weight:600; cursor:pointer; }
+  .account-btn:hover { border-color:var(--line-strong); }
+  @media (max-width:900px) {
+    .gate-grid { grid-template-columns:1fr; }
+    .gate-top, .gate-foot { padding-left:20px; padding-right:20px; }
+    .gate-main { padding:28px 16px; }
+    .gate-hero h2 { font-size:36px; }
+    .gate-card { padding:24px 20px; }
+    .gate-secure span { display:none; }
+  }
+</style>
 </head>
-<body>
+<body class="locked">
+<div id="gate">
+  <header class="gate-top">
+    <div class="brand-lockup">
+      <div class="mark"><img src="koel-logo.png" alt="KOEL" width="98" height="31"></div>
+      <div class="brand-rule"></div>
+      <h1>Asset Labels</h1>
+    </div>
+    <div class="gate-secure">
+      <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4M12 15v2"/></svg>
+      <span>Beveiligde omgeving</span>
+    </div>
+  </header>
+
+  <main class="gate-main">
+    <div class="gate-hero">
+      <h2>Welkom bij KOEL</h2>
+      <p>Log in en kies de klant waarvoor je aan de slag gaat.</p>
+    </div>
+    <div class="gate-grid">
+      <section class="gate-card">
+        <span class="gate-step">01</span>
+        <h3>Inloggen</h3>
+        <p>Gebruik je KOEL-account (hetzelfde als de Worklist).</p>
+        <form class="gate-form" id="loginForm" novalidate>
+          <div class="gate-field">
+            <label class="lbl" for="loginEmail">E-mailadres</label>
+            <input type="email" id="loginEmail" autocomplete="username" placeholder="naam@koelretail.com" required>
+          </div>
+          <div class="gate-field">
+            <label class="lbl" for="loginPass">Wachtwoord</label>
+            <div class="pw">
+              <input type="password" id="loginPass" autocomplete="current-password" required>
+              <button type="button" id="togglePass" aria-label="Wachtwoord tonen">
+                <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="gate-row">
+            <label class="remember"><input type="checkbox" id="remember" checked> Ingelogd blijven</label>
+            <button type="button" class="linkish" id="forgot">Wachtwoord vergeten?</button>
+          </div>
+          <button type="submit" class="gate-primary" id="loginBtn">Inloggen</button>
+          <div class="gate-msg" id="loginMsg" role="status" aria-live="polite"></div>
+        </form>
+        <div class="signed-in" id="signedIn" hidden>
+          <span class="tick" aria-hidden="true">✓</span>
+          <div><strong>Ingelogd</strong><span id="signedInEmail"></span></div>
+          <button type="button" class="linkish" id="gateLogout">Uitloggen</button>
+        </div>
+      </section>
+
+      <section class="gate-card alt">
+        <span class="gate-step">02</span>
+        <h3>Kies je klant</h3>
+        <p>Je krijgt de juiste labels en instellingen.</p>
+        <div class="gate-clients">
+          <button type="button" class="gate-client" data-client="nike" disabled>
+            <span class="logo"><img src="nike-swoosh.jpg" alt=""></span>
+            <strong>Nike</strong><small>Serienummerlabel</small>
+          </button>
+          <button type="button" class="gate-client" data-client="asics" disabled>
+            <span class="logo"><img src="asics-logo.svg" alt=""></span>
+            <strong>ASICS</strong><small>Assetcodelabel</small>
+          </button>
+        </div>
+        <div class="gate-selected" id="gateSelected">Geselecteerd: Nike</div>
+        <button type="button" class="gate-primary" id="gateGo" disabled>
+          Verder naar Asset Labels
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
+        </button>
+        <div class="gate-note" id="gateNote">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          <span>Log eerst in om verder te gaan.</span>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="gate-foot">
+    <span>KOEL Retail Technologies</span>
+    <span>Hulp nodig? <b>Neem contact op met IT.</b></span>
+  </footer>
+</div>
 <div class="wrap">
 
   <header class="topbar">
@@ -541,7 +699,9 @@
       <div class="brand-rule"></div>
       <h1>Asset Labels</h1>
     </div>
-    <div class="printer-status">
+    <div class="printer-status account">
+      <button type="button" class="account-btn" id="switchClient">Klant wisselen</button>
+      <button type="button" class="account-btn" id="logoutBtn" title="">Uitloggen</button>
       <div class="printer-card">
         <span class="dot"></span>
         <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v7H6z"/></svg>
@@ -688,8 +848,9 @@
 </div>
 
 <script type="module">
-import { CLIENTS, buildZpl, buildBatch, renderPreview, parseSerials, findDuplicates, validate, validateAsics } from './label.js?v=2026-10-22f';
-import { sendToPrinter } from './print.js?v=2026-10-22f';
+import { CLIENTS, buildZpl, buildBatch, renderPreview, parseSerials, findDuplicates, validate, validateAsics } from './label.js?v=2026-10-22g';
+import { sendToPrinter } from './print.js?v=2026-10-22g';
+import { watchUser, logIn, logOut, resetPassword, authMessage } from './auth.js?v=2026-10-22g';
 
 const DEFAULT_HOST = '10.2.10.26';
 const $ = (id) => document.getElementById(id);
@@ -905,7 +1066,7 @@ document.addEventListener('input', (e) => {
 });
 document.addEventListener('change', render);
 document.addEventListener('keydown', (e) => {
-  if (e.key !== 'Enter') return;
+  if (e.key !== 'Enter' || e.target.closest('#gate')) return;
   // A barcode scanner ends every scan with Enter, so inside the serial box Enter
   // must start a new line — that's what lets you scan a whole box of phones in a
   // row. Cmd/Ctrl+Enter prints from there instead.
@@ -920,6 +1081,103 @@ document.addEventListener('keydown', (e) => {
 $('host').value = localStorage.getItem('printerHost') || '';
 $('cfgHost').textContent = getHost();
 chooseClient(getClient(), false);
+
+// --- Login gate ---------------------------------------------------------------
+let gateClient = getClient();
+let signedIn = false;
+
+function gateMsg(text, kind = '') {
+  $('loginMsg').textContent = text;
+  $('loginMsg').className = 'gate-msg' + (kind ? ' ' + kind : '');
+}
+
+function renderGate() {
+  document.querySelectorAll('.gate-client').forEach((b) => {
+    b.disabled = !signedIn;
+    b.classList.toggle('active', b.dataset.client === gateClient);
+  });
+  $('gateSelected').textContent = `Geselecteerd: ${CLIENTS[gateClient].name}`;
+  $('gateGo').disabled = !signedIn;
+  $('gateNote').hidden = signedIn;
+}
+
+function showGate() {
+  document.body.classList.add('locked');
+  renderGate();
+}
+
+document.querySelectorAll('.gate-client').forEach((b) => {
+  b.onclick = () => { gateClient = b.dataset.client; renderGate(); };
+});
+
+$('gateGo').onclick = () => {
+  previewIndex = 0;
+  chooseClient(gateClient, false);
+  document.body.classList.remove('locked');
+  sessionStorage.setItem('labelsEntered', '1');
+  $('article').focus();
+};
+
+$('togglePass').onclick = () => {
+  const p = $('loginPass');
+  p.type = p.type === 'password' ? 'text' : 'password';
+  $('togglePass').setAttribute('aria-label', p.type === 'password' ? 'Wachtwoord tonen' : 'Wachtwoord verbergen');
+};
+
+$('loginForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const email = $('loginEmail').value.trim();
+  if (!email || !$('loginPass').value) return gateMsg('Vul je e-mailadres en wachtwoord in.', 'err');
+  $('loginBtn').disabled = true;
+  gateMsg('Bezig met inloggen…');
+  try {
+    await logIn(email, $('loginPass').value, $('remember').checked);
+  } catch (err) {
+    gateMsg(authMessage(err), 'err');
+  } finally {
+    $('loginBtn').disabled = false;
+  }
+};
+
+$('forgot').onclick = async () => {
+  const email = $('loginEmail').value.trim();
+  if (!email) return gateMsg('Vul eerst je e-mailadres in.', 'err');
+  try {
+    await resetPassword(email);
+    gateMsg(`Als ${email} een account heeft, staat er een resetlink in je mailbox.`, 'ok');
+  } catch (err) {
+    gateMsg(authMessage(err), 'err');
+  }
+};
+
+const doLogout = async () => {
+  sessionStorage.removeItem('labelsEntered');
+  await logOut();
+};
+$('gateLogout').onclick = doLogout;
+$('logoutBtn').onclick = doLogout;
+$('switchClient').onclick = () => { gateClient = getClient(); showGate(); };
+
+watchUser((user, denied) => {
+  signedIn = !!user;
+  $('loginForm').hidden = signedIn;
+  $('signedIn').hidden = !signedIn;
+  if (user) {
+    $('signedInEmail').textContent = user.email;
+    $('logoutBtn').title = user.email;
+    $('loginPass').value = '';
+    gateMsg('');
+    // Within one browser session a reload goes straight back to the tool.
+    if (sessionStorage.getItem('labelsEntered')) {
+      chooseClient(getClient(), false);
+      document.body.classList.remove('locked');
+      return;
+    }
+  } else if (denied) {
+    gateMsg(denied, 'err');
+  }
+  showGate();
+});
 </script>
 </body>
 </html>
