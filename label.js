@@ -50,7 +50,7 @@ export const ASICS_DEVICES = {
 const FONT = '0';
 const SIZE_LABEL = 24; // "Art :" and the barcode interpretation lines
 const SIZE_TEXT = 30; // description and the SN line
-const DESC_WIDTH = 300; // Nike layout stays identical to the existing label
+const DESC_WIDTH = LABEL_W - 32; // full width, as on the original Nike label
 
 // Layout: y positions of each row, shared by the ZPL and the preview.
 const ART_X = 99;
@@ -58,8 +58,10 @@ const SN_X = 27;
 const RIGHT_MARGIN = 10;
 const ART_AVAIL = LABEL_W - ART_X - RIGHT_MARGIN;
 const SN_AVAIL = LABEL_W - SN_X - RIGHT_MARGIN;
-const NIKE_LOGO_X = 348;
-const NIKE_LOGO_Y = 87;
+// Swoosh sits right of the "SN :" text, right-aligned with the barcodes and
+// between the description (ends y140) and the serial barcode (starts y178).
+const NIKE_LOGO_X = 456 - 10 - 96;
+const NIKE_LOGO_Y = 141;
 const NIKE_LOGO_W = 96;
 const NIKE_LOGO_H = 34;
 const ASICS_LOGO_X = 165;
@@ -192,8 +194,7 @@ export function buildZpl({ client = 'nike', article, description, serial, stripS
   out.push(bar(ART_X, Y.artBar, art, artFit));
   // Description wraps to 2 lines so long names don't run off the edge.
   out.push(`^FO22,${Y.desc}^A${FONT}N,${SIZE_TEXT},${SIZE_TEXT}^FB${DESC_WIDTH},2,0,L,0^FD${desc}^FS`);
-  out.push('^FO336,82^GB1,50,1^FS');
-  out.push(`^FO${NIKE_LOGO_X},${NIKE_LOGO_Y}^GFA,408,408,12,${NIKE_GFA}^FS`);
+  if (swooshFits(snBar)) out.push(`^FO${NIKE_LOGO_X},${NIKE_LOGO_Y}^GFA,408,408,12,${NIKE_GFA}^FS`);
   out.push(text(22, Y.snText, SIZE_TEXT, `SN : ${snBar}`));
   out.push(bar(SN_X, Y.snBar, snBar, snFit));
   out.push(`^PQ${qty}`, '^XZ');
@@ -236,6 +237,13 @@ function measure(text, px) {
   _ctx = _ctx || document.createElement('canvas').getContext('2d');
   _ctx.font = `bold ${px}px Helvetica, Arial, sans-serif`;
   return _ctx.measureText(text).width;
+}
+
+// An unusually long serial would run into the swoosh; then the logo is left off.
+// Without a browser (node tests) there is nothing to measure, so assume it fits.
+function swooshFits(snBar) {
+  if (typeof document === 'undefined') return true;
+  return measure(`SN : ${snBar}`, SIZE_TEXT) <= NIKE_LOGO_X - 22 - 14;
 }
 
 // Word wrap like ZPL's ^FB: break on spaces, hard-break words that don't fit.
@@ -301,8 +309,20 @@ function code128Bars(data, x, y, height, moduleWidth = 2) {
 
 const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 
+// Draws the exact printer bitmap, so the preview can never drift from the print.
 function previewNikeLogo() {
-  return `<defs><clipPath id="brandLogoClip"><rect x="${NIKE_LOGO_X}" y="${NIKE_LOGO_Y}" width="${NIKE_LOGO_W}" height="${NIKE_LOGO_H}"/></clipPath></defs><image href="${CLIENTS.nike.logoPath}" x="313" y="57" width="158" height="89" clip-path="url(#brandLogoClip)"/>`;
+  const bytes = NIKE_GFA.match(/../g).map((b) => parseInt(b, 16));
+  let d = '';
+  for (let y = 0; y < NIKE_LOGO_H; y++) {
+    for (let x = 0; x < NIKE_LOGO_W; x++) {
+      if (!(bytes[y * 12 + (x >> 3)] & (0x80 >> (x & 7)))) continue;
+      let run = 1;
+      while (x + run < NIKE_LOGO_W && bytes[y * 12 + ((x + run) >> 3)] & (0x80 >> ((x + run) & 7))) run++;
+      d += `M${NIKE_LOGO_X + x} ${NIKE_LOGO_Y + y}h${run}v1h-${run}z`;
+      x += run - 1;
+    }
+  }
+  return `<path d="${d}" fill="#000"/>`;
 }
 
 function renderAsicsPreview({ device, sequence }) {
@@ -344,8 +364,7 @@ export function renderPreview({ client = 'nike', article, description, serial, s
   wrap(desc, DESC_WIDTH, SIZE_TEXT, 2).forEach((line, i) => {
     s += `<text x="22" y="${Y.desc + 24 + i * SIZE_TEXT}" style="${TXT}">${esc(line)}</text>`;
   });
-  s += '<line x1="336" y1="82" x2="336" y2="132" stroke="#000" stroke-width="1"/>';
-  s += previewNikeLogo();
+  if (swooshFits(snBar)) s += previewNikeLogo();
   s += `<text x="22" y="${Y.snText + 24}" style="${TXT}">SN : ${esc(snBar)}</text>`;
 
   if (snBar && CODE39.test(snBar)) {
