@@ -3,7 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Asset Labels — KOEL</title>
+<title>Klantlabels — KOEL</title>
+<meta name="description" content="Print assetlabels met de juiste klantbranding voor Nike en ASICS.">
+<meta property="og:title" content="KOEL Klantlabels">
+<meta property="og:description" content="De juiste klant. Het juiste label.">
+<meta property="og:image" content="https://koelretail.github.io/labels/og.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -62,15 +68,39 @@
   label.field { display:block; font-size:11px; font-weight:650; letter-spacing:.05em; text-transform:uppercase;
                 color:var(--muted); margin:0 0 6px; }
   .field-wrap + .field-wrap { margin-top:16px; }
-  input[type=text], input[type=number], textarea {
+  .client-field { padding-bottom:18px; border-bottom:1px solid var(--line-soft); }
+  .client-switch { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+  .client-option {
+    display:flex; align-items:center; justify-content:flex-start; gap:9px; width:100%; min-height:44px;
+    padding:9px 12px; color:var(--ink-2); background:var(--bg); border:1px solid var(--line);
+    border-radius:9px; font-size:14px; font-weight:650; cursor:pointer;
+    transition:border-color .12s, box-shadow .12s, background .12s;
+  }
+  .client-option:hover { border-color:var(--muted); }
+  .client-option.active {
+    color:#fff; background:var(--client-color); border-color:var(--client-color);
+    box-shadow:0 0 0 3px color-mix(in srgb, var(--client-color) 16%, transparent);
+  }
+  .client-check {
+    display:grid; place-items:center; width:18px; height:18px; border:1px solid currentColor;
+    border-radius:50%; font-size:11px; line-height:1; flex:0 0 auto;
+  }
+  input[type=text], input[type=number], textarea, select {
     width:100%; padding:11px 13px; font-size:15px; font-family:inherit; color:var(--ink);
     border:1px solid var(--line); border-radius:9px; background:var(--bg); transition:border-color .12s, box-shadow .12s;
   }
+  select { appearance:auto; }
   textarea { resize:vertical; min-height:52px; line-height:1.55;
              font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:13.5px; }
   input::placeholder, textarea::placeholder { color:var(--muted); opacity:.75; }
-  input:focus, textarea:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+  input:focus, textarea:focus, select:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
   .hint { font-size:12px; color:var(--muted); margin-top:6px; }
+  .asics-code {
+    margin-top:16px; padding:12px 14px; border:1px solid var(--line); border-radius:9px;
+    background:var(--bg); color:var(--ink); font:700 17px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+    letter-spacing:.02em; text-align:center;
+  }
+  [hidden] { display:none !important; }
 
   .bar { display:flex; align-items:center; gap:14px; flex-wrap:wrap;
          margin-top:20px; padding-top:18px; border-top:1px solid var(--line-soft); }
@@ -121,63 +151,522 @@
   footer { margin-top:26px; font-size:12.5px; color:var(--muted); line-height:1.7; }
   footer b { color:var(--ink-2); font-weight:600; }
   a { color:inherit; }
+  @media (max-width:560px) {
+    body { padding-inline:14px; }
+    .card-body { padding:18px; }
+    .client-switch { grid-template-columns:1fr; }
+    .bar .spacer { display:none; }
+    .btns { width:100%; }
+    .btns button { flex:1; }
+  }
+</style>
+<style id="studio-redesign">
+  :root {
+    --canvas:#f1f3f6; --surface:#ffffff; --surface-soft:#f7f8fa;
+    --navy:#0b1422; --navy-2:#131f31; --ink:#101722; --ink-2:#4a5565; --muted:#7c8796;
+    --line:#dfe4eb; --line-strong:#cfd6df; --accent:#246fc4; --accent-soft:#e8f1fc;
+    --client-color:#111111; --accent-ink:#fff; --err:#c33d32; --ok:#207a46; --warn:#956a12;
+    --shadow-sm:0 1px 2px rgba(10,20,34,.06),0 6px 18px rgba(10,20,34,.05);
+    --shadow-lg:0 24px 60px -24px rgba(10,20,34,.24);
+  }
+
+  * { box-sizing:border-box; }
+  body {
+    margin:0; padding:22px 22px 54px; min-height:100vh; color:var(--ink);
+    background:
+      radial-gradient(900px 520px at 94% -10%, rgba(36,111,196,.12), transparent 68%),
+      radial-gradient(720px 460px at -12% 34%, rgba(14,29,50,.06), transparent 72%),
+      var(--canvas);
+    font:15px/1.5 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  button,input,textarea,select { font:inherit; }
+  .wrap { max-width:1180px; margin:0 auto; }
+
+  .topbar {
+    position:relative; overflow:hidden; display:grid; grid-template-columns:auto 1fr auto;
+    align-items:center; gap:20px; min-height:106px; padding:22px 24px; margin-bottom:34px;
+    color:#fff; background:linear-gradient(125deg,var(--navy),var(--navy-2)); border:1px solid rgba(255,255,255,.08);
+    border-radius:22px; box-shadow:var(--shadow-lg);
+  }
+  .topbar::after {
+    content:""; position:absolute; width:300px; height:300px; right:-80px; top:-195px; border-radius:50%;
+    border:58px solid rgba(255,255,255,.035); pointer-events:none;
+  }
+  .brand-lockup { position:relative; z-index:1; display:flex; align-items:center; gap:16px; min-width:0; }
+  .mark {
+    display:grid; place-items:center; min-width:108px; height:58px; padding:10px 14px; flex:0 0 auto;
+    background:#fff; border-radius:13px; box-shadow:0 8px 24px rgba(0,0,0,.22);
+  }
+  .mark img { display:block; width:auto; height:31px; }
+  .brand-rule { width:1px; height:42px; background:rgba(255,255,255,.18); }
+  .eyebrow {
+    display:block; margin-bottom:4px; color:#7eb7f2; font-size:10.5px; line-height:1.2;
+    font-weight:750; letter-spacing:.14em; text-transform:uppercase;
+  }
+  h1 { margin:0; color:#fff; font-size:22px; line-height:1.15; font-weight:720; letter-spacing:-.025em; }
+  .tag { margin-top:5px; color:#aeb9c8; font-size:12.5px; }
+  .header-center { position:relative; z-index:1; padding-left:18px; border-left:1px solid rgba(255,255,255,.1); }
+  .header-center strong { display:block; font-size:13px; font-weight:650; color:#f3f7fb; }
+  .header-center span { display:block; margin-top:2px; color:#8d9aae; font-size:12px; }
+  .printer-status { position:relative; z-index:1; text-align:right; }
+  .printer-status > span { display:block; margin-bottom:6px; color:#8998ab; font-size:10px; font-weight:750; letter-spacing:.12em; text-transform:uppercase; }
+  .pill {
+    display:inline-flex; align-items:center; gap:8px; min-height:34px; padding:7px 12px; color:#dce6f2;
+    border:1px solid rgba(255,255,255,.13); border-radius:999px; background:rgba(255,255,255,.07); backdrop-filter:blur(10px);
+  }
+  .pill b { color:#fff; font:650 12px/1 ui-monospace,SFMono-Regular,Menlo,monospace; }
+  .dot { width:7px; height:7px; border-radius:50%; background:#55d48c; box-shadow:0 0 0 4px rgba(85,212,140,.12); }
+
+  .workspace-intro {
+    display:flex; align-items:flex-end; justify-content:space-between; gap:28px; margin:0 4px 20px;
+  }
+  .workspace-intro h2 { margin:2px 0 0; font-size:29px; line-height:1.15; letter-spacing:-.035em; }
+  .workspace-intro p { max-width:470px; margin:0 0 3px; color:var(--ink-2); font-size:13.5px; }
+  .workspace-intro .eyebrow,.card-top .eyebrow { color:#4d79aa; }
+
+  .grid { display:grid; grid-template-columns:minmax(390px,1fr) minmax(470px,1.1fr); gap:24px; align-items:start; }
+  .card { background:var(--surface); border:1px solid rgba(207,214,223,.92); border-radius:20px; box-shadow:var(--shadow-sm); }
+  .form-card { overflow:hidden; }
+  .card-top {
+    display:flex; align-items:center; justify-content:space-between; gap:16px; padding:20px 22px 18px;
+    border-bottom:1px solid var(--line); background:linear-gradient(180deg,#fff,var(--surface-soft));
+  }
+  .card-top h3,.preview-head h3 { margin:2px 0 0; font-size:18px; line-height:1.2; letter-spacing:-.02em; }
+  .step {
+    display:inline-grid; place-items:center; min-width:36px; height:26px; padding:0 9px; border:1px solid var(--line);
+    border-radius:999px; background:#fff; color:var(--muted); font:700 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  .card-body { padding:22px; }
+  .field-wrap + .field-wrap { margin-top:17px; }
+  label.field { display:block; margin:0 0 7px; color:#667284; font-size:10.5px; line-height:1.2; font-weight:750; letter-spacing:.11em; text-transform:uppercase; }
+  .client-field { padding-bottom:20px; margin-bottom:20px; border-bottom:1px solid var(--line); }
+  .client-switch { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+  .client-option {
+    position:relative; display:flex; align-items:center; justify-content:flex-start; gap:11px; width:100%; min-height:58px;
+    padding:10px 13px; color:var(--ink-2); background:var(--surface-soft); border:1px solid var(--line);
+    border-radius:12px; cursor:pointer; text-align:left; transition:border-color .15s,box-shadow .15s,transform .15s,background .15s;
+  }
+  .client-option:hover { border-color:#b8c2cf; background:#fff; transform:translateY(-1px); }
+  .client-option.active {
+    color:#fff; background:var(--client-color); border-color:var(--client-color);
+    box-shadow:0 8px 24px -10px color-mix(in srgb,var(--client-color) 60%,transparent); transform:none;
+  }
+  .client-check {
+    display:grid; place-items:center; width:24px; height:24px; flex:0 0 auto; border:1px solid currentColor;
+    border-radius:8px; font-size:12px; line-height:1; opacity:.9;
+  }
+  .client-copy { display:flex; min-width:0; flex-direction:column; }
+  .client-copy strong { font-size:13.5px; line-height:1.25; font-weight:720; }
+  .client-copy small { margin-top:2px; color:currentColor; font-size:10.5px; font-weight:500; opacity:.64; }
+  .hint { margin-top:7px; color:var(--muted); font-size:11.5px; }
+
+  input[type=text],input[type=number],textarea,select {
+    width:100%; min-height:46px; padding:11px 13px; color:var(--ink); background:#f6f8fa; border:1px solid var(--line);
+    border-radius:11px; box-shadow:inset 0 1px 1px rgba(10,20,34,.025); transition:border-color .15s,box-shadow .15s,background .15s;
+  }
+  textarea { min-height:74px; resize:vertical; line-height:1.55; font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace; }
+  input::placeholder,textarea::placeholder { color:#98a2b0; opacity:1; }
+  input:focus,textarea:focus,select:focus {
+    outline:none; background:#fff; border-color:color-mix(in srgb,var(--client-color) 58%,#c2cad4);
+    box-shadow:0 0 0 4px color-mix(in srgb,var(--client-color) 10%,transparent);
+  }
+  .asics-code {
+    position:relative; overflow:hidden; margin-top:17px; padding:15px 16px; color:#fff; background:linear-gradient(135deg,#0b1e42,#123775);
+    border:0; border-radius:12px; font:720 17px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.025em; text-align:center;
+    box-shadow:0 12px 26px -15px rgba(0,38,98,.7);
+  }
+  .asics-code::before { content:"Preview code"; display:block; margin-bottom:6px; color:#8eb8ea; font:700 9px/1 Inter,sans-serif; letter-spacing:.13em; text-transform:uppercase; }
+  [hidden] { display:none !important; }
+
+  .bar { display:flex; align-items:center; gap:13px; flex-wrap:wrap; margin-top:22px; padding-top:20px; border-top:1px solid var(--line); }
+  .qty { display:flex; align-items:center; gap:9px; }
+  .qty label { color:var(--muted); font-size:11.5px; }
+  .qty input { width:64px; min-height:39px; padding:7px 8px; text-align:center; }
+  .chk { display:inline-flex; align-items:center; gap:8px; color:var(--ink-2); font-size:11.5px; cursor:pointer; user-select:none; }
+  .chk input { width:16px; height:16px; accent-color:var(--client-color); cursor:pointer; }
+  .bar .spacer { flex:1; }
+  .btns { display:flex; gap:9px; flex:0 0 auto; }
+  button { border:0; cursor:pointer; }
+  .btns button {
+    min-height:44px; padding:11px 18px; border-radius:11px; font-size:13px; font-weight:700; transition:filter .15s,transform .08s,box-shadow .15s;
+  }
+  .btns button:not(.ghost) {
+    color:#fff; background:var(--client-color); box-shadow:0 10px 22px -12px color-mix(in srgb,var(--client-color) 76%,transparent);
+  }
+  .btns button:hover:not(:disabled) { filter:brightness(1.12); }
+  .btns button:active:not(:disabled) { transform:translateY(1px); }
+  .btns button:disabled { opacity:.48; cursor:default; }
+  button.ghost { color:var(--ink-2); background:#fff; border:1px solid var(--line-strong); }
+  button.ghost:hover { color:var(--ink); border-color:#aeb8c5; }
+  button:focus-visible,summary:focus-visible {
+    outline:3px solid color-mix(in srgb,var(--client-color) 28%,#fff); outline-offset:3px;
+  }
+  #msg { min-height:0; margin-top:14px; padding:10px 12px; border-radius:9px; font-size:12px; display:flex; gap:7px; align-items:flex-start; }
+  #msg:empty { display:none; }
+  #msg.ok { color:var(--ok); background:#ecf8f1; }
+  #msg.err { color:var(--err); background:#fff0ee; }
+  #msg.warn { color:var(--warn); background:#fff7e5; }
+
+  aside { position:sticky; top:22px; }
+  .preview-card { overflow:hidden; color:#fff; background:linear-gradient(150deg,#0e1928,#172539); border:1px solid rgba(255,255,255,.08); border-radius:20px; box-shadow:var(--shadow-lg); }
+  .preview-head { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:20px 22px 17px; border-bottom:1px solid rgba(255,255,255,.09); }
+  .preview-head h3 { color:#fff; }
+  .preview-head .eyebrow { color:#739fd1; }
+  .preview-specs { display:flex; gap:7px; flex-wrap:wrap; justify-content:flex-end; }
+  .preview-specs span { padding:5px 8px; color:#a8b6c8; background:rgba(255,255,255,.055); border:1px solid rgba(255,255,255,.08); border-radius:7px; font:650 9.5px/1 ui-monospace,SFMono-Regular,Menlo,monospace; }
+  .preview-stage {
+    position:relative; padding:22px; background:
+      linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px),
+      radial-gradient(440px 220px at 50% 25%,rgba(69,110,164,.2),transparent 78%);
+    background-size:24px 24px,24px 24px,auto;
+  }
+  .cap { display:flex; justify-content:space-between; gap:10px; margin:0 2px 12px; color:#8190a4; font-size:9.5px; font-weight:750; letter-spacing:.1em; text-transform:uppercase; }
+  #previewNote { max-width:65%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#c5d0dd; letter-spacing:0; font-weight:600; text-transform:none; }
+  .liner {
+    padding:15px; background:#eae1c2; border-radius:15px; box-shadow:0 24px 50px -24px rgba(0,0,0,.75);
+    background-image:repeating-linear-gradient(45deg,rgba(62,47,15,.045) 0 2px,transparent 2px 6px);
+  }
+  .sticker { padding:10px; background:#fff; border-radius:8px; box-shadow:0 2px 7px rgba(25,20,8,.3); }
+  .sticker svg { display:block; width:456px; max-width:100%; height:auto; }
+  .preview-footer { display:flex; justify-content:space-between; gap:14px; padding:13px 22px 15px; color:#8493a7; border-top:1px solid rgba(255,255,255,.07); font-size:10.5px; }
+  .preview-ready { display:inline-flex; align-items:center; gap:7px; color:#a9b8c9; }
+  .preview-ready i { width:6px; height:6px; border-radius:50%; background:#55d48c; box-shadow:0 0 0 4px rgba(85,212,140,.09); }
+
+  details { margin-top:18px; }
+  summary { display:inline-flex; align-items:center; gap:7px; padding:7px 10px; color:var(--ink-2); background:rgba(255,255,255,.64); border:1px solid var(--line); border-radius:9px; font-size:11.5px; font-weight:650; cursor:pointer; }
+  summary:hover { color:var(--ink); background:#fff; }
+  details .card { margin-top:10px; }
+  details .card-body { padding:18px 20px; }
+  details .bar { margin-top:14px; padding-top:14px; }
+  footer { display:flex; justify-content:space-between; gap:24px; margin-top:24px; padding:0 4px; color:var(--muted); font-size:11.5px; line-height:1.7; }
+  footer b { color:var(--ink-2); font-weight:700; }
+  kbd { padding:1px 5px; color:#586476; background:#fff; border:1px solid var(--line-strong); border-bottom-width:2px; border-radius:5px; font:700 10px/1.3 ui-monospace,Menlo,monospace; }
+
+  @media (max-width:980px) {
+    .header-center { display:none; }
+    .topbar { grid-template-columns:1fr auto; }
+    .grid { grid-template-columns:1fr; }
+    aside { position:static; }
+    .workspace-intro p { max-width:390px; }
+  }
+  @media (max-width:640px) {
+    body { padding:12px 12px 38px; }
+    .topbar { min-height:0; padding:18px; margin-bottom:26px; border-radius:17px; }
+    .mark { min-width:86px; height:49px; padding:8px 10px; }
+    .mark img { height:26px; }
+    .brand-rule,.printer-status > span { display:none; }
+    h1 { font-size:18px; }
+    .tag { font-size:11px; }
+    .pill { min-height:30px; padding:6px 9px; }
+    .workspace-intro { display:block; margin-bottom:16px; }
+    .workspace-intro h2 { font-size:24px; }
+    .workspace-intro p { margin-top:8px; }
+    .client-switch { grid-template-columns:1fr; }
+    .card-top,.preview-head { padding:17px 18px 15px; }
+    .card-body,.preview-stage { padding:18px; }
+    .preview-head { align-items:flex-start; }
+    .preview-specs { max-width:120px; }
+    .bar .spacer { display:none; }
+    .btns { width:100%; }
+    .btns button { flex:1; }
+    footer { display:block; }
+  }
+  @media (prefers-reduced-motion:reduce) {
+    *,*::before,*::after { scroll-behavior:auto !important; transition:none !important; }
+  }
+</style>
+<style id="reference-design">
+  :root {
+    --ui-blue:#0b62f6; --ui-blue-dark:#074cc4; --navy:#071638; --canvas:#f7f9fc;
+    --surface:#fff; --surface-soft:#f8faff; --ink:#071638; --ink-2:#52617a; --muted:#7a879d;
+    --line:#dbe3ef; --line-strong:#bac8dc; --shadow-sm:0 2px 7px rgba(27,48,84,.035);
+  }
+  body { padding:0 0 38px; background:linear-gradient(180deg,#fff 0,#f8faff 55%,#fff 100%); color:var(--ink); }
+  .wrap { max-width:none; margin:0; }
+
+  .topbar {
+    display:flex; align-items:center; justify-content:space-between; min-height:88px; margin:0 0 0; padding:15px 50px;
+    color:var(--navy); background:rgba(255,255,255,.94); border:0; border-bottom:1px solid #e4e9f1; border-radius:0;
+    box-shadow:0 1px 8px rgba(27,48,84,.025); backdrop-filter:blur(14px);
+  }
+  .topbar::after,.header-center { display:none; }
+  .brand-lockup { gap:22px; }
+  .mark { min-width:0; width:auto; height:auto; padding:0; background:transparent; border-radius:0; box-shadow:none; }
+  .mark img { height:39px; width:auto; }
+  .brand-rule { width:1px; height:38px; background:#aebbd0; }
+  h1 { color:var(--navy); font-size:22px; letter-spacing:-.025em; }
+  .printer-status { text-align:left; }
+  .printer-card {
+    display:flex; align-items:center; gap:12px; min-width:245px; padding:9px 14px; background:#fbfcfe;
+    border:1px solid var(--line); border-radius:12px; box-shadow:0 2px 8px rgba(27,48,84,.03);
+  }
+  .printer-card .dot { width:8px; height:8px; margin-right:2px; background:#21b66f; box-shadow:none; }
+  .printer-card svg { width:28px; height:28px; fill:none; stroke:var(--navy); stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .printer-copy { display:flex; flex:1; flex-direction:column; min-width:0; }
+  .printer-copy strong { font-size:12.5px; line-height:1.3; font-weight:750; }
+  .printer-copy b { color:#6f7d93; font:500 11.5px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace; }
+  .chevron { color:var(--navy); font-size:23px; line-height:1; transform:translateY(-2px); }
+
+  .workspace-intro { display:block; max-width:1320px; margin:32px auto 22px; padding:0 30px; }
+  .hero-rule { display:block; width:46px; height:4px; margin-bottom:13px; background:var(--ui-blue); border-radius:999px; }
+  .workspace-intro h2 { margin:0; color:var(--navy); font-size:42px; line-height:1.04; font-weight:800; letter-spacing:-.045em; }
+  .workspace-intro p { max-width:none; margin:7px 0 0; color:#687790; font-size:18px; line-height:1.35; }
+
+  .grid { max-width:1320px; margin:0 auto; padding:0 30px; grid-template-columns:minmax(410px,1fr) minmax(470px,1fr); gap:16px; }
+  .card { border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow-sm); }
+  .form-card { min-height:574px; }
+  .card-top { padding:24px 30px 0; background:#fff; border:0; }
+  .card-top h3,.preview-head h3 { color:var(--navy); font-size:26px; line-height:1.2; font-weight:800; letter-spacing:-.035em; }
+  .card-body { padding:18px 30px 28px; }
+  .client-field { margin:0 0 18px; padding-bottom:17px; }
+  .client-switch { gap:8px; }
+  .client-option { min-height:48px; padding:8px 12px; border-radius:10px; background:#f8faff; }
+  .client-option:hover { border-color:#a9bad2; transform:none; }
+  .client-option.active { color:#fff; background:var(--ui-blue); border-color:var(--ui-blue); box-shadow:0 7px 18px -12px rgba(11,98,246,.75); }
+  .client-check { width:21px; height:21px; border-radius:7px; }
+  .client-copy strong { font-size:12.5px; }
+  .client-copy small { font-size:10px; }
+  label.field { margin:0; color:var(--navy); font-size:13px; font-weight:650; letter-spacing:0; text-transform:none; }
+  .field-wrap + .field-wrap { margin-top:16px; }
+  .field-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 7px; }
+  .field-header > span { color:#8b98ab; font-size:9.5px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; }
+  .field-header .field-meta { color:var(--ui-blue); font-size:10.5px; letter-spacing:0; text-transform:none; }
+  input[type=text],input[type=number],textarea,select {
+    min-height:44px; padding:10px 13px; color:var(--navy); background:#fff; border-color:var(--line-strong); border-radius:9px;
+    box-shadow:none; font-size:13.5px;
+  }
+  textarea { min-height:76px; font-size:13px; }
+  input:focus,textarea:focus,select:focus { border-color:var(--ui-blue); box-shadow:0 0 0 3px rgba(11,98,246,.1); }
+  .hint { margin-top:5px; font-size:10.5px; }
+  .asics-code { margin-top:13px; padding:11px 14px; background:#f2f6ff; color:var(--ui-blue-dark); border:1px solid #ccdcfb; box-shadow:none; font-size:14px; }
+  .asics-code::before { display:none; }
+
+  .bar { justify-content:space-between; gap:18px; margin-top:18px; padding-top:17px; }
+  .qty { gap:12px; }
+  .qty label { color:var(--navy); font-size:12px; font-weight:600; }
+  .counter { display:grid; grid-template-columns:38px 52px 38px; height:39px; overflow:hidden; border:1px solid var(--line-strong); border-radius:9px; }
+  .counter button { display:grid; place-items:center; padding:0; color:var(--navy); background:#f2f6fd; border-radius:0; font-size:19px; line-height:1; }
+  .counter button:hover { background:#e5edfa; }
+  .counter input { width:52px; min-height:0; height:37px; padding:0; border:0; border-right:1px solid var(--line); border-left:1px solid var(--line); border-radius:0; text-align:center; -moz-appearance:textfield; }
+  .counter input::-webkit-outer-spin-button,.counter input::-webkit-inner-spin-button { margin:0; -webkit-appearance:none; }
+  .chk { gap:12px; color:var(--navy); font-size:12px; font-weight:600; }
+  .chk input { position:absolute; width:1px; height:1px; opacity:0; }
+  .toggle-ui { position:relative; width:48px; height:27px; flex:0 0 auto; background:#cdd6e4; border-radius:999px; transition:background .15s; }
+  .toggle-ui::after { content:""; position:absolute; width:21px; height:21px; left:3px; top:3px; background:#fff; border-radius:50%; box-shadow:0 2px 5px rgba(20,37,67,.22); transition:transform .15s; }
+  .chk input:checked + .toggle-ui { background:var(--ui-blue); }
+  .chk input:checked + .toggle-ui::after { transform:translateX(21px); }
+  .chk input:focus-visible + .toggle-ui { outline:3px solid rgba(11,98,246,.18); outline-offset:2px; }
+
+  aside { position:sticky; top:18px; }
+  .preview-card { min-height:574px; color:var(--navy); background:linear-gradient(145deg,#eef6ff,#dbeaff); border:1px solid #d4e2f4; border-radius:14px; box-shadow:none; }
+  .preview-head { padding:24px 28px 8px; border:0; }
+  .preview-client { display:block; min-height:16px; margin-top:3px; color:#6d7d95; font-size:10.5px; font-weight:600; }
+  .size-badge { padding:7px 12px; color:var(--navy); background:rgba(255,255,255,.72); border:1px solid #c6d3e5; border-radius:9px; font-size:12px; font-weight:650; }
+  .preview-stage { display:flex; min-height:420px; flex-direction:column; justify-content:center; padding:8px 28px 12px; background:transparent; }
+  .liner { padding:20px 28px; background:transparent; border-radius:0; box-shadow:none; }
+  .sticker { padding:10px; border-radius:9px; box-shadow:0 22px 34px -19px rgba(31,61,105,.55); transform:rotate(-1.25deg); transform-origin:center; }
+  .sticker svg { width:456px; margin:auto; }
+  .preview-pager { display:flex; align-items:center; justify-content:center; gap:28px; margin:25px 0 0; }
+  .preview-pager button { display:grid; place-items:center; width:39px; height:39px; padding:0; color:var(--navy); background:#fff; border:1px solid var(--line); border-radius:9px; box-shadow:0 3px 10px rgba(31,61,105,.08); font-size:28px; line-height:1; }
+  .preview-pager button:hover:not(:disabled) { border-color:#aabbd2; }
+  .preview-pager button:disabled { opacity:.38; cursor:default; }
+  .preview-pager span { min-width:60px; text-align:center; font-size:12px; }
+  .preview-footer { justify-content:flex-start; gap:14px; margin:0 28px; padding:13px 0 15px; color:#687790; border-top:1px solid #c9d8eb; font-size:10.5px; }
+  .preview-footer span + span { padding-left:14px; border-left:1px solid #b9c8dc; }
+
+  .action-dock {
+    display:flex; align-items:center; justify-content:space-between; gap:24px; max-width:1260px; min-height:82px;
+    margin:14px auto 0; padding:14px 25px; background:#fff; border:1px solid var(--line); border-radius:13px; box-shadow:var(--shadow-sm);
+  }
+  .action-status { display:flex; align-items:center; min-width:0; gap:17px; }
+  .status-check { display:grid; place-items:center; width:44px; height:44px; flex:0 0 auto; color:#fff; background:#aab4c1; border-radius:50%; font-size:24px; font-weight:500; transition:background .15s; }
+  .action-dock.is-ready .status-check { background:#22b56c; }
+  .action-status strong { display:block; color:var(--navy); font-size:15px; font-weight:750; }
+  #msg { min-height:0; margin:2px 0 0; padding:0; background:transparent; border-radius:0; font-size:10.5px; }
+  #msg.ok,#msg.err,#msg.warn { background:transparent; }
+  .dock-actions { display:flex; gap:12px; flex:0 0 auto; }
+  .dock-actions button { display:inline-flex; align-items:center; justify-content:center; gap:10px; min-height:50px; padding:12px 24px; border-radius:9px; font-size:13px; font-weight:750; }
+  .dock-actions svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  .download-btn { color:var(--ui-blue); background:#fff; border:1.5px solid var(--ui-blue); }
+  .download-btn:hover { background:#f4f8ff; }
+  .print-btn { min-width:210px; color:#fff; background:var(--ui-blue); box-shadow:0 9px 20px -12px rgba(11,98,246,.8); }
+  .print-btn:hover:not(:disabled) { background:var(--ui-blue-dark); }
+  .dock-actions button:disabled { opacity:.42; cursor:default; box-shadow:none; }
+  button:focus-visible,summary:focus-visible { outline-color:rgba(11,98,246,.28); }
+
+  details,footer { max-width:1260px; margin-right:auto; margin-left:auto; }
+  details { margin-top:12px; }
+  footer { margin-top:12px; padding:0 15px; }
+
+  @media (max-width:900px) {
+    .topbar { padding:14px 24px; }
+    .workspace-intro,.grid { padding-right:20px; padding-left:20px; }
+    .grid { grid-template-columns:1fr; }
+    aside { position:static; }
+    .action-dock { margin-right:20px; margin-left:20px; }
+  }
+  @media (max-width:640px) {
+    .topbar { padding:13px 16px; }
+    .mark img { height:30px; }
+    .brand-rule { height:30px; }
+    h1 { font-size:17px; }
+    .printer-card { min-width:0; padding:8px 10px; }
+    .printer-card svg,.chevron { display:none; }
+    .printer-copy strong { display:none; }
+    .workspace-intro { margin-top:24px; }
+    .workspace-intro h2 { font-size:34px; }
+    .workspace-intro p { font-size:15px; }
+    .card-top,.preview-head { padding-right:20px; padding-left:20px; }
+    .card-body { padding-right:20px; padding-left:20px; }
+    .bar { align-items:flex-start; flex-direction:column; }
+    .preview-stage { min-height:0; padding:10px 10px 14px; }
+    .liner { padding:18px 8px; }
+    .preview-footer { margin-right:20px; margin-left:20px; }
+    .action-dock { align-items:stretch; flex-direction:column; padding:16px; }
+    .dock-actions { width:100%; }
+    .dock-actions button { flex:1; padding:11px 13px; }
+    .print-btn { min-width:0; }
+    footer { padding:0 20px; }
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <header>
-    <div class="mark"><img src="koel-logo.png" alt="KOEL" width="82" height="26"></div>
-    <div class="rule"></div>
-    <div>
+  <header class="topbar">
+    <div class="brand-lockup">
+      <div class="mark"><img src="koel-logo.png" alt="KOEL" width="98" height="31"></div>
+      <div class="brand-rule"></div>
       <h1>Asset Labels</h1>
-      <div class="tag">57 × 31 mm · Code 39 · Zebra ZD500R</div>
     </div>
-    <div class="spacer"></div>
-    <span class="pill"><span class="dot"></span> <b id="cfgHost">—</b></span>
+    <div class="printer-status">
+      <div class="printer-card">
+        <span class="dot"></span>
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v7H6z"/></svg>
+        <span class="printer-copy"><strong>Zebra ZD500R</strong><b id="cfgHost">—</b></span>
+        <span class="chevron" aria-hidden="true">⌄</span>
+      </div>
+    </div>
   </header>
 
+  <section class="workspace-intro" aria-labelledby="workspaceTitle">
+    <span class="hero-rule" aria-hidden="true"></span>
+    <h2 id="workspaceTitle">Assetlabels maken</h2>
+    <p>Scan serienummers, controleer je label en print.</p>
+  </section>
+
   <div class="grid">
-    <div class="card"><div class="card-body">
-      <div class="field-wrap">
-        <label class="field" for="article">Article</label>
-        <input type="text" id="article" autocomplete="off" placeholder="25311" autofocus>
+    <div class="card form-card">
+      <div class="card-top">
+        <h3>Labelgegevens</h3>
+      </div>
+      <div class="card-body">
+      <div class="field-wrap client-field">
+        <label class="field">Klant</label>
+        <div class="client-switch" role="group" aria-label="Klant kiezen">
+          <button class="client-option" type="button" data-client="nike" aria-pressed="false">
+            <span class="client-check" aria-hidden="true"></span>
+            <span class="client-copy"><strong>Nike</strong><small>Serienummerlabel</small></span>
+          </button>
+          <button class="client-option" type="button" data-client="asics" aria-pressed="false">
+            <span class="client-check" aria-hidden="true"></span>
+            <span class="client-copy"><strong>ASICS</strong><small>Assetcodelabel</small></span>
+          </button>
+        </div>
+        <div class="hint">Het gekozen klantlogo verschijnt automatisch op ieder label.</div>
       </div>
 
-      <div class="field-wrap">
-        <label class="field" for="description">Description</label>
-        <input type="text" id="description" autocomplete="off" placeholder="NIKE phone SE 64 GB black">
+      <div id="nikeFields">
+        <div class="field-wrap">
+          <div class="field-header"><label class="field" for="article">Artikelnummer</label><span>Verplicht</span></div>
+          <input type="text" id="article" autocomplete="off" placeholder="25311" autofocus>
+        </div>
+
+        <div class="field-wrap">
+          <div class="field-header"><label class="field" for="description">Omschrijving</label><span>Verplicht</span></div>
+          <input type="text" id="description" autocomplete="off" placeholder="iPhone SE 64 GB zwart">
+        </div>
+
+        <div class="field-wrap">
+          <div class="field-header"><label class="field" for="serial">Serienummers</label><span class="field-meta" id="snInfo"></span></div>
+          <textarea id="serial" rows="2" autocomplete="off" spellcheck="false"
+            placeholder="Scan of plak meerdere — gescheiden door komma of enter"></textarea>
+        </div>
       </div>
 
-      <div class="field-wrap">
-        <label class="field" for="serial">Serial number(s)</label>
-        <textarea id="serial" rows="2" autocomplete="off" spellcheck="false"
-          placeholder="Scan of plak meerdere — komma of enter ertussen"></textarea>
-        <div class="hint" id="snInfo"></div>
+      <div id="asicsFields" hidden>
+        <div class="field-wrap">
+          <div class="field-header"><label class="field" for="asicsDevice">Apparaattype</label><span>Verplicht</span></div>
+          <select id="asicsDevice">
+            <option value="IPD">iPad · IPD</option>
+            <option value="POS">POS · POS</option>
+            <option value="RTR">Router · RTR</option>
+          </select>
+        </div>
+
+        <div class="field-wrap">
+          <div class="field-header"><label class="field" for="asicsSequence">Volgnummer</label><span>Verplicht</span></div>
+          <input type="number" id="asicsSequence" min="1" max="999999" step="1" value="1" inputmode="numeric">
+          <div class="hint">Vul het eerstvolgende vrijgegeven nummer in. Het label maakt er automatisch zes cijfers van.</div>
+        </div>
+
+        <div class="asics-code" id="asicsCode">ASICS-IPD-000001</div>
       </div>
 
       <div class="bar">
-        <div class="qty">
-          <label for="copies">Per stuk</label>
-          <input type="number" id="copies" value="1" min="1" max="50">
+        <div class="qty" id="qtyWrap">
+          <label for="copies">Aantal per toestel</label>
+          <div class="counter">
+            <button type="button" id="qtyMinus" aria-label="Aantal verlagen">−</button>
+            <input type="number" id="copies" value="1" min="1" max="50">
+            <button type="button" id="qtyPlus" aria-label="Aantal verhogen">+</button>
+          </div>
         </div>
-        <label class="chk"><input type="checkbox" id="stripS" checked> Leidende “S” eruit</label>
-        <div class="spacer"></div>
-        <div class="btns">
-          <button class="ghost" id="zplBtn" type="button">ZPL</button>
-          <button id="printBtn" type="button">Print Label</button>
-        </div>
+        <label class="chk" id="stripWrap"><span>Voorloop-S verwijderen</span><input type="checkbox" id="stripS" checked><span class="toggle-ui" aria-hidden="true"></span></label>
       </div>
-
-      <div id="msg"></div>
     </div></div>
 
     <aside>
-      <div class="cap"><span>Voorbeeld · 1:1</span><span id="previewNote"></span></div>
-      <div class="liner"><div class="sticker">
-        <svg id="lbl" viewBox="0 0 456 248"></svg>
-      </div></div>
+      <div class="preview-card">
+        <div class="preview-head">
+          <div><h3>Labelvoorbeeld</h3><span class="preview-client" id="previewNote"></span></div>
+          <span class="size-badge">57 × 31 mm</span>
+        </div>
+        <div class="preview-stage">
+          <div class="liner"><div class="sticker">
+            <svg id="lbl" viewBox="0 0 456 248"></svg>
+          </div></div>
+          <div class="preview-pager" id="previewPager" hidden>
+            <button type="button" id="previewPrev" aria-label="Vorig label">‹</button>
+            <span id="previewPosition">1 van 1</span>
+            <button type="button" id="previewNext" aria-label="Volgend label">›</button>
+          </div>
+        </div>
+        <div class="preview-footer">
+          <span id="barcodeType">Code 39</span>
+          <span>Zebra ZD500R</span>
+        </div>
+      </div>
     </aside>
+  </div>
+
+  <div class="action-dock">
+    <div class="action-status">
+      <span class="status-check" aria-hidden="true">✓</span>
+      <div><strong id="readyCopy">Vul de labelgegevens in.</strong><div id="msg" role="status" aria-live="polite"></div></div>
+    </div>
+    <div class="dock-actions">
+      <button class="download-btn" id="zplBtn" type="button">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v12m0 0 5-5m-5 5-5-5M4 17v4h16v-4"/></svg>
+        Download ZPL
+      </button>
+      <button class="print-btn" id="printBtn" type="button">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v7H6z"/></svg>
+        <span>Print labels</span>
+      </button>
+    </div>
   </div>
 
   <details>
@@ -193,27 +682,45 @@
   </details>
 
   <footer>
-    <b>Chrome of Edge</b>, op het kantoornetwerk — sta lokale netwerktoegang toe als je erom gevraagd wordt.<br>
-    <kbd>Enter</kbd> in het serienummer-vak = nieuwe regel · <kbd>⌘</kbd><kbd>Enter</kbd> print.
+    <span><b>Chrome of Edge</b> · gebruik de tool op het kantoornetwerk.</span>
+    <span><kbd>Enter</kbd> nieuwe regel · <kbd>⌘</kbd><kbd>Enter</kbd> direct printen</span>
   </footer>
 </div>
 
 <script type="module">
-import { buildZpl, buildBatch, renderPreview, parseSerials, findDuplicates, validate } from './label.js';
-import { sendToPrinter } from './print.js';
+import { CLIENTS, buildZpl, buildBatch, renderPreview, parseSerials, findDuplicates, validate, validateAsics } from './label.js?v=2026-10-22';
+import { sendToPrinter } from './print.js?v=2026-10-22';
 
 const DEFAULT_HOST = '10.2.10.26';
 const $ = (id) => document.getElementById(id);
 const getHost = () => localStorage.getItem('printerHost') || DEFAULT_HOST;
+const getClient = () => localStorage.getItem('labelClient') || 'nike';
 const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+let previewIndex = 0;
+
+function setPrintText(text) {
+  $('printBtn').querySelector('span').textContent = text;
+}
+
+function setReady(ready, text) {
+  $('readyCopy').textContent = text;
+  document.querySelector('.action-dock').classList.toggle('is-ready', ready);
+  document.querySelector('.status-check').textContent = ready ? '✓' : '·';
+  $('printBtn').disabled = !ready;
+  $('zplBtn').disabled = !ready;
+}
 
 function form() {
+  const client = getClient();
   return {
+    client,
     article: $('article').value,
     description: $('description').value,
     serials: parseSerials($('serial').value),
     stripS: $('stripS').checked,
-    copies: $('copies').value,
+    copies: client === 'asics' ? 1 : $('copies').value,
+    device: $('asicsDevice').value,
+    sequence: $('asicsSequence').value,
   };
 }
 
@@ -229,7 +736,7 @@ function checkBatch({ serials, ...common }) {
   for (const serial of serials) {
     const { errors } = validate({ ...common, serial });
     // Article errors repeat for every serial; only collect what's serial-specific.
-    const own = errors.filter((e) => !e.startsWith('Article'));
+    const own = errors.filter((e) => !e.startsWith('Artikel'));
     if (own.length) bad.push(`${serial}: ${own.join(' ')}`);
   }
   return bad;
@@ -246,21 +753,44 @@ function autoGrow() {
 function render() {
   autoGrow();
   const f = form();
-  const first = f.serials[0] || '';
-  const { svg, tooLong } = renderPreview({ ...f, serial: first });
+  const n = f.serials.length;
+  previewIndex = n ? Math.min(previewIndex, n - 1) : 0;
+  const current = f.serials[previewIndex] || '';
+  const { svg, tooLong } = renderPreview({ ...f, serial: current });
   $('lbl').innerHTML = svg;
 
-  const n = f.serials.length;
+  if (f.client === 'asics') {
+    const { errors, code } = validateAsics(f);
+    $('asicsCode').textContent = code;
+    $('previewNote').textContent = code;
+    $('previewPager').hidden = true;
+    $('barcodeType').textContent = 'Code 128';
+    setPrintText('Print ASICS-label');
+    $('snInfo').textContent = '';
+    setReady(!errors.length, errors.length ? 'Vul een geldig ASICS-label in.' : 'ASICS-label klaar om te printen.');
+    if (errors.length) say(errors.join(' '), 'err');
+    else if ($('msg').className) say('');
+    return;
+  }
+
   const copies = Math.max(1, parseInt(f.copies, 10) || 1);
   const total = n * copies;
-  $('printBtn').textContent = total > 1 ? `Print ${plural(total, 'label')}` : 'Print Label';
-  $('previewNote').textContent = n > 1 ? `eerste van ${n} · ${first}` : '';
+  setPrintText(total > 1 ? `Print ${plural(total, 'label')}` : 'Print label');
+  $('previewNote').textContent = n > 1 ? current : CLIENTS[f.client].name;
+  $('previewPager').hidden = n <= 1;
+  $('previewPosition').textContent = `${previewIndex + 1} van ${Math.max(n, 1)}`;
+  $('previewPrev').disabled = previewIndex === 0;
+  $('previewNext').disabled = previewIndex >= n - 1;
+  $('barcodeType').textContent = 'Code 39';
   $('snInfo').textContent = n > 1
     ? `${plural(n, 'serienummer')}${copies > 1 ? ` × ${copies} = ${plural(total, 'label')}` : ''}`
     : '';
 
   const dupes = findDuplicates(f.serials);
   const bad = checkBatch(f);
+  const currentErrors = validate({ ...f, serial: current }).errors;
+  const ready = n > 0 && !tooLong.length && !bad.length && !currentErrors.length;
+  setReady(ready, ready ? `${plural(total, 'label')} klaar om te printen.` : 'Vul de verplichte labelgegevens in.');
   if (tooLong.length) say(`${tooLong.join(' en ')} te lang voor de barcode — korter maken.`, 'err');
   else if (bad.length) say(`Werkt niet: ${bad.slice(0, 3).join(' | ')}${bad.length > 3 ? ` (+${bad.length - 3} meer)` : ''}`, 'err');
   else if (dupes.length) say(`Let op — dubbel ingevoerd: ${dupes.join(', ')}. Die krijgen elk twee labels.`, 'warn');
@@ -268,7 +798,8 @@ function render() {
 }
 
 function zplFor(f) {
-  if (!f.serials.length) throw new Error('Serial number is leeg.');
+  if (f.client === 'asics') return buildZpl(f);
+  if (!f.serials.length) throw new Error('Serienummer is leeg.');
   const bad = checkBatch(f);
   if (bad.length) throw new Error(bad.join(' | '));
   return buildBatch(f);
@@ -282,26 +813,45 @@ $('printBtn').onclick = async () => {
   } catch (e) {
     return say(e.message, 'err');
   }
-  const total = f.serials.length * Math.max(1, parseInt(f.copies, 10) || 1);
+  const total = f.client === 'asics' ? 1 : f.serials.length * Math.max(1, parseInt(f.copies, 10) || 1);
   $('printBtn').disabled = true;
   say('Versturen…');
   try {
     await sendToPrinter(zpl, getHost());
     // The response is opaque, so this is "sent", not "printed" — say so honestly.
-    say(`${plural(total, 'label')} verstuurd — kijk of ze uit de printer komen.`, 'ok');
-    $('serial').value = '';
-    $('serial').focus();
-    render();
+    if (f.client === 'asics') {
+      const { code } = validateAsics(f);
+      say(`ASICS-label ${code} verstuurd — controleer de printer voordat je het volgende nummer gebruikt.`, 'ok');
+      $('asicsSequence').focus();
+      $('asicsSequence').select();
+    } else {
+      $('serial').value = '';
+      previewIndex = 0;
+      $('serial').focus();
+      render();
+      say(`${plural(total, 'label')} voor Nike verstuurd — kijk of ze uit de printer komen.`, 'ok');
+    }
   } catch (e) {
     say(`Kon de printer niet bereiken (${e.message}). Zit je op het kantoornetwerk? Sta lokale netwerktoegang toe als Chrome erom vraagt.`, 'err');
   } finally {
-    $('printBtn').disabled = false;
+    if (f.client === 'asics' || $('serial').value.trim()) $('printBtn').disabled = false;
   }
 };
 
 $('zplBtn').onclick = () => {
   try {
-    alert(zplFor(form()));
+    const f = form();
+    const zpl = zplFor(f);
+    const blob = new Blob([zpl], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `koel-${f.client}-labels.zpl`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    say('ZPL-bestand gedownload.', 'ok');
   } catch (e) {
     say(e.message, 'err');
   }
@@ -315,7 +865,44 @@ $('saveHost').onclick = () => {
   say(`Printer ingesteld op ${getHost()}`, 'ok');
 };
 
-document.addEventListener('input', render);
+function chooseClient(client, announce = true) {
+  if (!CLIENTS[client]) client = 'nike';
+  localStorage.setItem('labelClient', client);
+  document.documentElement.style.setProperty('--client-color', CLIENTS[client].color);
+  document.querySelectorAll('.client-option').forEach((button) => {
+    const active = button.dataset.client === client;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    button.querySelector('.client-check').textContent = active ? '✓' : '';
+  });
+  const asics = client === 'asics';
+  $('nikeFields').hidden = asics;
+  $('asicsFields').hidden = !asics;
+  $('qtyWrap').hidden = asics;
+  $('stripWrap').hidden = asics;
+  if (announce) say(`Klant ingesteld op ${CLIENTS[client].name}.`, 'ok');
+  render();
+}
+
+document.querySelectorAll('.client-option').forEach((button) => {
+  button.onclick = () => { previewIndex = 0; chooseClient(button.dataset.client); };
+});
+
+$('qtyMinus').onclick = () => {
+  $('copies').value = Math.max(1, (parseInt($('copies').value, 10) || 1) - 1);
+  render();
+};
+$('qtyPlus').onclick = () => {
+  $('copies').value = Math.min(50, (parseInt($('copies').value, 10) || 1) + 1);
+  render();
+};
+$('previewPrev').onclick = () => { previewIndex = Math.max(0, previewIndex - 1); render(); };
+$('previewNext').onclick = () => { previewIndex += 1; render(); };
+
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'serial') previewIndex = 0;
+  render();
+});
 document.addEventListener('change', render);
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Enter') return;
@@ -332,7 +919,7 @@ document.addEventListener('keydown', (e) => {
 ['article', 'description', 'serial'].forEach((id) => ($(id).value = ''));
 $('host').value = localStorage.getItem('printerHost') || '';
 $('cfgHost').textContent = getHost();
-render();
+chooseClient(getClient(), false);
 </script>
 </body>
 </html>

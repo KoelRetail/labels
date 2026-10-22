@@ -3,8 +3,12 @@
 Printtool voor de asset-labels van KOEL Retail (57 × 31 mm) op de **Zebra ZD500R**.
 Vervangt het oude Windows-tooltje `Asset_labels`.
 
-**Gebruiken:** open de site, vul Article / Description / Serial number in, klik **Print Label**.
-Je hoeft niets te installeren.
+**Gebruiken:** open de site, kies de klant en vul de velden voor die klant in. Nike gebruikt
+Artikel / Omschrijving / Serienummer. ASICS gebruikt een apparaattype en een volgnummer.
+Klik daarna op **Print label**. Je hoeft niets te installeren.
+
+De gekozen klant (**Nike** of **ASICS**) wordt in de browser onthouden. Het bijbehorende
+logo verschijnt in het voorbeeld en wordt als monochrome printerafbeelding in de ZPL opgenomen.
 
 ## Waarom dit werkt zonder server
 
@@ -23,7 +27,7 @@ Daaruit volgen twee dingen die je moet weten:
 De printer stuurt geen antwoord terug dat de browser mag lezen. Daarom zegt de app
 *"Verstuurd"* en niet *"Gelukt"* — of het label er echt uit komt, zie je aan de printer.
 
-## Het label
+## Nike-label
 
 | Regel | Inhoud |
 |---|---|
@@ -45,6 +49,20 @@ Op 57 mm is dat ruim 11 tekens naast "Art :".
 Een productnaam hoort dus **niet** in Article: "Nike Apple iPhone SE 64GB Black" zou als
 Code 39 zo'n 107 mm breed worden. Korte code in Article, naam in Description.
 
+## ASICS-label
+
+Het ASICS-label is bewust minimaal: het ASICS-logo, één assetcode en een scanbare
+**Code 128**-barcode. Er staat geen serienummer op. De assetcode bestaat uit het merk,
+een apparaatcode en een volgnummer van zes cijfers:
+
+- `ASICS-IPD-000001` voor een iPad
+- `ASICS-POS-000001` voor een POS
+- `ASICS-RTR-000001` voor een router
+
+Vul steeds het eerstvolgende vrijgegeven volgnummer in. De tool voegt de voorloopnullen
+toe, maar beheert geen centrale nummerreeks; zo blijft de uitgifte bewust onder controle
+van de beheerder.
+
 ## Andere printer
 
 Onder **Instellingen** kun je het IP-adres wijzigen. Dat wordt in je browser onthouden,
@@ -57,5 +75,6 @@ dus het staat niet in de code.
 | `index.html` | formulier, voorbeeldweergave en bediening |
 | `label.js` | bouwt de ZPL en tekent het voorbeeld (dezelfde layout-getallen voor allebei) |
 | `print.js` | stuurt de ZPL naar de printer |
+| `asics-logo.svg` / `nike-swoosh.jpg` | bronlogo's voor het schermvoorbeeld |
 
 Geen build-stap, geen dependencies. Aanpassen = bestand bewerken, committen, pushen.
