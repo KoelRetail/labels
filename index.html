@@ -568,6 +568,7 @@
   .gate-primary:hover:not(:disabled) { background:var(--ui-blue-dark); }
   .gate-primary:disabled { background:#b9cdf3; cursor:not-allowed; }
   .gate-primary svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  .gate-switch { margin-top:16px; text-align:center; color:#52617a; font-size:15px; }
   .gate-msg { min-height:22px; margin-top:12px; font-size:14px; color:#52617a; }
   .gate-msg.err { color:var(--err); }
   .gate-msg.ok { color:var(--ok); }
@@ -629,8 +630,8 @@
     <div class="gate-grid">
       <section class="gate-card">
         <span class="gate-step">01</span>
-        <h3>Inloggen</h3>
-        <p>Gebruik je KOEL-account (hetzelfde als de Worklist).</p>
+        <h3 id="loginTitle">Inloggen</h3>
+        <p id="loginSub">Gebruik je KOEL-account (hetzelfde als de Worklist).</p>
         <form class="gate-form" id="loginForm" novalidate>
           <div class="gate-field">
             <label class="lbl" for="loginEmail">E-mailadres</label>
@@ -649,7 +650,12 @@
             <label class="remember"><input type="checkbox" id="remember" checked> Ingelogd blijven</label>
             <button type="button" class="linkish" id="forgot">Wachtwoord vergeten?</button>
           </div>
+          <div class="gate-field" id="pass2Wrap" hidden>
+            <label class="lbl" for="loginPass2">Herhaal wachtwoord</label>
+            <input type="password" id="loginPass2" autocomplete="new-password">
+          </div>
           <button type="submit" class="gate-primary" id="loginBtn">Inloggen</button>
+          <div class="gate-switch"><span id="switchText">Nog geen account?</span> <button type="button" class="linkish" id="modeBtn">Account aanmaken</button></div>
           <div class="gate-msg" id="loginMsg" role="status" aria-live="polite"></div>
         </form>
         <div class="signed-in" id="signedIn" hidden>
@@ -848,9 +854,9 @@
 </div>
 
 <script type="module">
-import { CLIENTS, buildZpl, buildBatch, renderPreview, parseSerials, findDuplicates, validate, validateAsics } from './label.js?v=2026-10-22g';
-import { sendToPrinter } from './print.js?v=2026-10-22g';
-import { watchUser, logIn, logOut, resetPassword, authMessage } from './auth.js?v=2026-10-22g';
+import { CLIENTS, buildZpl, buildBatch, renderPreview, parseSerials, findDuplicates, validate, validateAsics } from './label.js?v=2026-10-22h';
+import { sendToPrinter } from './print.js?v=2026-10-22h';
+import { watchUser, logIn, signUp, logOut, resetPassword, authMessage, isKoelEmail } from './auth.js?v=2026-10-22h';
 
 const DEFAULT_HOST = '10.2.10.26';
 const $ = (id) => document.getElementById(id);
@@ -1124,10 +1130,46 @@ $('togglePass').onclick = () => {
   $('togglePass').setAttribute('aria-label', p.type === 'password' ? 'Wachtwoord tonen' : 'Wachtwoord verbergen');
 };
 
+let signupMode = false;
+function setMode(signup) {
+  signupMode = signup;
+  $('pass2Wrap').hidden = !signup;
+  $('loginForm').querySelector('.gate-row').hidden = signup;
+  $('loginBtn').textContent = signup ? 'Account aanmaken' : 'Inloggen';
+  $('loginTitle').textContent = signup ? 'Account aanmaken' : 'Inloggen';
+  $('loginSub').textContent = signup ? 'Met je KOEL-mailadres. Je bevestigt het via een link in je mailbox.' : 'Gebruik je KOEL-account (hetzelfde als de Worklist).';
+  $('switchText').textContent = signup ? 'Heb je al een account?' : 'Nog geen account?';
+  $('modeBtn').textContent = signup ? 'Inloggen' : 'Account aanmaken';
+  $('loginPass').autocomplete = signup ? 'new-password' : 'current-password';
+  $('loginEmail').placeholder = signup ? 'jouw KOEL-mailadres' : 'naam@koelretail.com';
+  gateMsg('');
+}
+$('modeBtn').onclick = () => setMode(!signupMode);
+
+async function submitSignup(email) {
+  const pass = $('loginPass').value;
+  if (!isKoelEmail(email)) return gateMsg('Gebruik je KOEL-mailadres (@koelretail.be, .nl of .com).', 'err');
+  if (pass.length < 8) return gateMsg('Kies een wachtwoord van minstens 8 tekens.', 'err');
+  if (pass !== $('loginPass2').value) return gateMsg('De twee wachtwoorden zijn niet gelijk.', 'err');
+  $('loginBtn').disabled = true;
+  gateMsg('Account wordt aangemaakt…');
+  try {
+    await signUp(email, pass);
+    $('loginPass').value = $('loginPass2').value = '';
+    setMode(false);
+    gateMsg(`Account aangemaakt. Klik op de link in de mail naar ${email} (kijk ook in je spam) en log daarna hier in.`, 'ok');
+  } catch (err) {
+    gateMsg(authMessage(err), 'err');
+  } finally {
+    $('loginBtn').disabled = false;
+  }
+}
+
 $('loginForm').onsubmit = async (e) => {
   e.preventDefault();
   const email = $('loginEmail').value.trim();
   if (!email || !$('loginPass').value) return gateMsg('Vul je e-mailadres en wachtwoord in.', 'err');
+  if (signupMode) return submitSignup(email);
   $('loginBtn').disabled = true;
   gateMsg('Bezig met inloggen…');
   try {
