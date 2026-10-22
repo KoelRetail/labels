@@ -132,7 +132,7 @@ export function validateAsics({ device = 'IPD', sequence }) {
 
   const number = validSequence ? Number(raw) : null;
   const suffix = number == null ? '______' : String(number).padStart(6, '0');
-  return { errors, code: `ASICS-${deviceCode}-${suffix}`, number, deviceCode };
+  return { errors, code: `${deviceCode}-${suffix}`, number, deviceCode };
 }
 
 // Splits a pasted batch into serials. Accepts comma, semicolon, newline, tab or

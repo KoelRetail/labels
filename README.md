@@ -55,9 +55,9 @@ Het ASICS-label is bewust minimaal: het ASICS-logo, één assetcode en een scanb
 **Code 128**-barcode. Er staat geen serienummer op. De assetcode bestaat uit het merk,
 een apparaatcode en een volgnummer van zes cijfers:
 
-- `ASICS-IPD-000001` voor een iPad
-- `ASICS-POS-000001` voor een POS
-- `ASICS-RTR-000001` voor een router
+- `IPD-000001` voor een iPad
+- `POS-000001` voor een POS
+- `RTR-000001` voor een router
 
 Vul steeds het eerstvolgende vrijgegeven volgnummer in. De tool voegt de voorloopnullen
 toe, maar beheert geen centrale nummerreeks; zo blijft de uitgifte bewust onder controle
