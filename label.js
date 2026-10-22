@@ -64,9 +64,7 @@ const DESC_WIDTH = NIKE_LOGO_X - MARGIN - 16;
 const BAR_AVAIL = LABEL_W - 2 * MARGIN;
 const ART_AVAIL = BAR_AVAIL;
 const SN_AVAIL = BAR_AVAIL;
-const SIZE_DESC = 24;
-const DESC_LINE = 26;
-const Y = { desc: 16, rule: 72, art: 82, artBar: 114, sn: 160, snBar: 192, barH: 34 };
+const Y = { rule: 62, art: 76, artBar: 108, sn: 156, snBar: 188, barH: 38 };
 const ASICS_LOGO_X = 165;
 const ASICS_LOGO_Y = 16;
 const ASICS_LOGO_W = 126;
@@ -193,7 +191,7 @@ export function buildZpl({ client = 'nike', article, description, serial, stripS
   out.push(`^PW${LABEL_W}`, `^LL${LABEL_H}`, '^LH0,0', '^MMT');
   if (darkness != null && darkness !== '') out.push(`~SD${String(darkness).padStart(2, '0')}`);
 
-  descriptionLines(desc).forEach((line, i) => out.push(text(MARGIN, Y.desc + i * DESC_LINE, SIZE_DESC, line)));
+  descriptionLines(desc).forEach((l) => out.push(text(MARGIN, l.y, l.size, l.text)));
   out.push(`^FO${NIKE_LOGO_X},${NIKE_LOGO_Y}^GFA,408,408,12,${NIKE_GFA}^FS`);
   out.push(`^FO${MARGIN},${Y.rule}^GB${BAR_AVAIL},2,2^FS`);
   out.push(text(MARGIN, Y.art + 5, SIZE_KEY, 'ART'), text(VALUE_X, Y.art, SIZE_VALUE, art));
@@ -242,17 +240,27 @@ function measure(text, px) {
   return _ctx.measureText(text).width;
 }
 
-// The description gets up to two header lines next to the swoosh. Anything
-// longer is cut with an ellipsis rather than overprinted or run into the logo.
+// The description sits on one line next to the swoosh, shrinking the font step
+// by step to keep it there. Only when even the smallest size won't fit does it
+// wrap to two lines (cut with an ellipsis after that). Returns {text, size, y}.
 // Without a browser (node tests) there is nothing to measure; print one line.
+const DESC_SIZES = [24, 22, 20, 18];
 function descriptionLines(desc) {
   if (!desc) return [];
-  if (typeof document === 'undefined') return [desc];
-  const lines = wrap(desc, DESC_WIDTH, SIZE_DESC, 99);
-  if (lines.length <= 2) return lines;
-  let last = lines[1];
-  while (last && measure(last + '…', SIZE_DESC) > DESC_WIDTH) last = last.slice(0, -1);
-  return [lines[0], last.trimEnd() + '…'];
+  const centered = (size) => NIKE_LOGO_Y + Math.round((NIKE_LOGO_H - size) / 2);
+  if (typeof document === 'undefined') return [{ text: desc, size: DESC_SIZES[0], y: centered(DESC_SIZES[0]) }];
+  for (const size of DESC_SIZES) {
+    if (measure(desc, size) <= DESC_WIDTH) return [{ text: desc, size, y: centered(size) }];
+  }
+  const size = DESC_SIZES[DESC_SIZES.length - 1];
+  const lines = wrap(desc, DESC_WIDTH, size, 99);
+  if (lines.length > 2) {
+    let last = lines[1];
+    while (last && measure(last + '…', size) > DESC_WIDTH) last = last.slice(0, -1);
+    lines.splice(1, lines.length, last.trimEnd() + '…');
+  }
+  const top = NIKE_LOGO_Y + Math.round((NIKE_LOGO_H - 2 * (size + 2)) / 2);
+  return lines.map((text, i) => ({ text, size, y: top + i * (size + 2) }));
 }
 
 // Word wrap like ZPL's ^FB: break on spaces, hard-break words that don't fit.
@@ -364,7 +372,7 @@ export function renderPreview({ client = 'nike', article, description, serial, s
   const tooLong = [];
   let s = `<rect width="${LABEL_W}" height="${LABEL_H}" fill="#fff"/>`;
 
-  descriptionLines(desc).forEach((line, i) => { s += text(MARGIN, Y.desc + i * DESC_LINE, SIZE_DESC, line); });
+  descriptionLines(desc).forEach((l) => { s += text(MARGIN, l.y, l.size, l.text); });
   s += previewNikeLogo();
   s += `<rect x="${MARGIN}" y="${Y.rule}" width="${BAR_AVAIL}" height="2" fill="#000"/>`;
 
