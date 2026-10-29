@@ -71,6 +71,9 @@ const ASICS_LOGO_W = 126;
 const ASICS_LOGO_H = 44;
 const ASICS_CODE_Y = 66;
 const ASICS_CODE_SIZE = 32;
+// The ZD500R measures the roll at 263 dots per label (config page), not 248:
+// black runs to the full measured length so no white strip shows at the bottom.
+const ASICS_BLEED_H = 263;
 const ASICS_PANEL = { x: 16, y: 110, w: LABEL_W - 32, h: 122 };
 const ASICS_BAR = { y: 126, h: 90, module: 2 };
 // Code 128 B: start + chars + check + stop, 11 modules each, +2 for the stop bar.
@@ -169,11 +172,11 @@ function buildAsicsZpl({ device, sequence, darkness }) {
   if (errors.length) throw new Error(errors.join(' '));
 
   const logo = ASICS_PRINT_LOGO;
-  const out = ['^XA', '^CI28', `^PW${LABEL_W}`, `^LL${LABEL_H}`, '^LH0,0', '^MMT'];
+  const out = ['^XA', '^CI28', `^PW${LABEL_W}`, `^LL${ASICS_BLEED_H}`, '^LH0,0', '^MMT'];
   if (darkness != null && darkness !== '') out.push(`~SD${String(darkness).padStart(2, '0')}`);
 
   const P = ASICS_PANEL, B = ASICS_BAR;
-  out.push(`^FO0,0^GB${LABEL_W},${LABEL_H},${LABEL_H},B^FS`);
+  out.push(`^FO0,0^GB${LABEL_W},${ASICS_BLEED_H},${ASICS_BLEED_H},B^FS`);
   // ^FR reverses the field over the black: white logo and white code.
   out.push(`^FO${ASICS_LOGO_X},${ASICS_LOGO_Y}^FR^GFA,${logo.totalBytes},${logo.totalBytes},${logo.bytesPerRow},${logo.data}^FS`);
   out.push(`^FO0,${ASICS_CODE_Y}^FR^A0N,${ASICS_CODE_SIZE},${ASICS_CODE_SIZE}^FB${LABEL_W},1,0,C,0^FD${code}^FS`);
