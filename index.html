@@ -765,6 +765,12 @@
 
       <div id="asicsFields" hidden>
         <div class="field-wrap">
+          <div class="field-header"><label class="field" for="asicsPrefix">Naam</label><span>Verplicht</span></div>
+          <input type="text" id="asicsPrefix" value="DTC" maxlength="6" autocomplete="off" spellcheck="false" style="text-transform:uppercase">
+          <div class="hint">Het deel vóór het nummer, bv. DTC. Letters en cijfers, maximaal 6.</div>
+        </div>
+
+        <div class="field-wrap">
           <div class="field-header"><label class="field" for="asicsSequence">Volgnummer</label><span>Verplicht</span></div>
           <input type="number" id="asicsSequence" min="1" max="999999" step="1" value="1" inputmode="numeric">
           <div class="hint">Vul het eerstvolgende vrijgegeven nummer in. Het label maakt er automatisch zes cijfers van.</div>
@@ -846,9 +852,9 @@
 </div>
 
 <script type="module">
-import { CLIENTS, buildZpl, buildBatch, renderPreview, parseSerials, findDuplicates, validate, validateAsics } from './label.js?v=2026-10-29b';
-import { sendToPrinter } from './print.js?v=2026-10-29b';
-import { watchUser, logIn, signUp, logOut, resetPassword, authMessage, isKoelEmail } from './auth.js?v=2026-10-29b';
+import { CLIENTS, buildZpl, buildBatch, renderPreview, parseSerials, findDuplicates, validate, validateAsics } from './label.js?v=2026-10-29c';
+import { sendToPrinter } from './print.js?v=2026-10-29c';
+import { watchUser, logIn, signUp, logOut, resetPassword, authMessage, isKoelEmail } from './auth.js?v=2026-10-29c';
 
 const DEFAULT_HOST = '10.2.10.26';
 const $ = (id) => document.getElementById(id);
@@ -878,7 +884,7 @@ function form() {
     serials: parseSerials($('serial').value),
     stripS: $('stripS').checked,
     copies: client === 'asics' ? 1 : $('copies').value,
-    device: 'DTC',
+    device: $('asicsPrefix').value,
     sequence: $('asicsSequence').value,
   };
 }

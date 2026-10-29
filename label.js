@@ -40,10 +40,9 @@ export const CLIENTS = {
   asics: { id: 'asics', name: 'ASICS', color: '#001e62', logoPath: 'asics-logo.svg' },
 };
 
-// ASICS keeps one unbroken number series for every device type.
-export const ASICS_DEVICES = {
-  DTC: { code: 'DTC', name: 'DTC' },
-};
+// The prefix is free to set (DTC by default); letters and digits only, and
+// short enough that the Code 128 still fits the panel at 0.25 mm modules.
+export const ASICS_PREFIX_MAX = 6;
 
 // Zebra scalable font 0 (Swiss 721) — the bold sans look of the asset labels.
 const FONT = '0';
@@ -130,11 +129,11 @@ export function validate({ article, description, serial, stripS }) {
 
 export function validateAsics({ device = 'DTC', sequence }) {
   const errors = [];
-  const deviceCode = ASICS_DEVICES[device] ? device : 'DTC';
+  const deviceCode = String(device == null ? '' : device).trim().toUpperCase();
   const raw = String(sequence == null ? '' : sequence).trim();
   const validSequence = /^\d{1,6}$/.test(raw) && Number(raw) >= 1 && Number(raw) <= 999999;
 
-  if (!ASICS_DEVICES[device]) errors.push('Kies een geldig apparaattype.');
+  if (!new RegExp(`^[A-Z0-9]{1,${ASICS_PREFIX_MAX}}$`).test(deviceCode)) errors.push(`Naam: 1 tot ${ASICS_PREFIX_MAX} letters of cijfers, zonder spaties of streepjes.`);
   if (!validSequence) errors.push('Volgnummer moet tussen 000001 en 999999 liggen.');
 
   const number = validSequence ? Number(raw) : null;
