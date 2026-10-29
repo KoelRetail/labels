@@ -466,8 +466,9 @@
   .size-badge { padding:7px 12px; color:var(--navy); background:rgba(255,255,255,.72); border:1px solid #c6d3e5; border-radius:9px; font-size:12px; font-weight:650; }
   .preview-stage { display:flex; min-height:420px; flex-direction:column; justify-content:center; padding:8px 28px 12px; background:transparent; }
   .liner { padding:20px 28px; background:transparent; border-radius:0; box-shadow:none; }
-  .sticker { padding:10px; border-radius:9px; box-shadow:0 22px 34px -19px rgba(31,61,105,.55); transform:rotate(-1.25deg); transform-origin:center; }
-  .sticker svg { width:456px; margin:auto; }
+  /* The sticker edge is the label edge: no padding, so the preview is to scale (57 x 31 mm). */
+  .sticker { width:fit-content; max-width:100%; margin:auto; padding:0; overflow:hidden; border-radius:9px; box-shadow:0 22px 34px -19px rgba(31,61,105,.55); transform:rotate(-1.25deg); transform-origin:center; }
+  .sticker svg { width:456px; margin:0; }
   .preview-pager { display:flex; align-items:center; justify-content:center; gap:28px; margin:25px 0 0; }
   .preview-pager button { display:grid; place-items:center; width:39px; height:39px; padding:0; color:var(--navy); background:#fff; border:1px solid var(--line); border-radius:9px; box-shadow:0 3px 10px rgba(31,61,105,.08); font-size:28px; line-height:1; }
   .preview-pager button:hover:not(:disabled) { border-color:#aabbd2; }
@@ -845,9 +846,9 @@
 </div>
 
 <script type="module">
-import { CLIENTS, buildZpl, buildBatch, renderPreview, parseSerials, findDuplicates, validate, validateAsics } from './label.js?v=2026-10-29a';
-import { sendToPrinter } from './print.js?v=2026-10-29a';
-import { watchUser, logIn, signUp, logOut, resetPassword, authMessage, isKoelEmail } from './auth.js?v=2026-10-29a';
+import { CLIENTS, buildZpl, buildBatch, renderPreview, parseSerials, findDuplicates, validate, validateAsics } from './label.js?v=2026-10-29b';
+import { sendToPrinter } from './print.js?v=2026-10-29b';
+import { watchUser, logIn, signUp, logOut, resetPassword, authMessage, isKoelEmail } from './auth.js?v=2026-10-29b';
 
 const DEFAULT_HOST = '10.2.10.26';
 const $ = (id) => document.getElementById(id);
