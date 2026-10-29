@@ -764,21 +764,12 @@
 
       <div id="asicsFields" hidden>
         <div class="field-wrap">
-          <div class="field-header"><label class="field" for="asicsDevice">Apparaattype</label><span>Verplicht</span></div>
-          <select id="asicsDevice">
-            <option value="IPD">iPad · IPD</option>
-            <option value="POS">POS · POS</option>
-            <option value="RTR">Router · RTR</option>
-          </select>
-        </div>
-
-        <div class="field-wrap">
           <div class="field-header"><label class="field" for="asicsSequence">Volgnummer</label><span>Verplicht</span></div>
           <input type="number" id="asicsSequence" min="1" max="999999" step="1" value="1" inputmode="numeric">
           <div class="hint">Vul het eerstvolgende vrijgegeven nummer in. Het label maakt er automatisch zes cijfers van.</div>
         </div>
 
-        <div class="asics-code" id="asicsCode">IPD-000001</div>
+        <div class="asics-code" id="asicsCode">DTC-000001</div>
       </div>
 
       <div class="bar">
@@ -854,9 +845,9 @@
 </div>
 
 <script type="module">
-import { CLIENTS, buildZpl, buildBatch, renderPreview, parseSerials, findDuplicates, validate, validateAsics } from './label.js?v=2026-10-22i';
-import { sendToPrinter } from './print.js?v=2026-10-22i';
-import { watchUser, logIn, signUp, logOut, resetPassword, authMessage, isKoelEmail } from './auth.js?v=2026-10-22i';
+import { CLIENTS, buildZpl, buildBatch, renderPreview, parseSerials, findDuplicates, validate, validateAsics } from './label.js?v=2026-10-29a';
+import { sendToPrinter } from './print.js?v=2026-10-29a';
+import { watchUser, logIn, signUp, logOut, resetPassword, authMessage, isKoelEmail } from './auth.js?v=2026-10-29a';
 
 const DEFAULT_HOST = '10.2.10.26';
 const $ = (id) => document.getElementById(id);
@@ -886,7 +877,7 @@ function form() {
     serials: parseSerials($('serial').value),
     stripS: $('stripS').checked,
     copies: client === 'asics' ? 1 : $('copies').value,
-    device: $('asicsDevice').value,
+    device: 'DTC',
     sequence: $('asicsSequence').value,
   };
 }

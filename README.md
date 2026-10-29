@@ -51,13 +51,11 @@ Code 39 zo'n 107 mm breed worden. Korte code in Article, naam in Description.
 
 ## ASICS-label
 
-Het ASICS-label is bewust minimaal: het ASICS-logo, één assetcode en een scanbare
-**Code 128**-barcode. Er staat geen serienummer op. De assetcode bestaat uit het merk,
-een apparaatcode en een volgnummer van zes cijfers:
+Het ASICS-label is bewust minimaal en zwart: wit ASICS-logo, witte assetcode en een
+scanbare **Code 128**-barcode in een wit vlak (zwart op wit scant op elke scanner).
+Er staat geen serienummer op. De assetcode is `DTC-` plus een volgnummer van zes cijfers:
 
-- `IPD-000001` voor een iPad
-- `POS-000001` voor een POS
-- `RTR-000001` voor een router
+- `DTC-000001`, `DTC-000002`, … — één doorlopende reeks voor alle toestellen
 
 Vul steeds het eerstvolgende vrijgegeven volgnummer in. De tool voegt de voorloopnullen
 toe, maar beheert geen centrale nummerreeks; zo blijft de uitgifte bewust onder controle

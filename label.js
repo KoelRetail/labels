@@ -40,10 +40,9 @@ export const CLIENTS = {
   asics: { id: 'asics', name: 'ASICS', color: '#001e62', logoPath: 'asics-logo.svg' },
 };
 
+// ASICS keeps one unbroken number series for every device type.
 export const ASICS_DEVICES = {
-  IPD: { code: 'IPD', name: 'iPad' },
-  POS: { code: 'POS', name: 'POS' },
-  RTR: { code: 'RTR', name: 'Router' },
+  DTC: { code: 'DTC', name: 'DTC' },
 };
 
 // Zebra scalable font 0 (Swiss 721) — the bold sans look of the asset labels.
@@ -65,10 +64,18 @@ const BAR_AVAIL = LABEL_W - 2 * MARGIN;
 const ART_AVAIL = BAR_AVAIL;
 const SN_AVAIL = BAR_AVAIL;
 const Y = { rule: 62, art: 76, artBar: 108, sn: 156, snBar: 188, barH: 38 };
+// ASICS: black label, white logo and code, barcode black-on-white in a panel
+// so every scanner reads it (inverted barcodes are hit and miss).
 const ASICS_LOGO_X = 165;
-const ASICS_LOGO_Y = 16;
+const ASICS_LOGO_Y = 14;
 const ASICS_LOGO_W = 126;
 const ASICS_LOGO_H = 44;
+const ASICS_CODE_Y = 66;
+const ASICS_CODE_SIZE = 32;
+const ASICS_PANEL = { x: 16, y: 110, w: LABEL_W - 32, h: 122 };
+const ASICS_BAR = { y: 126, h: 90, module: 2 };
+// Code 128 B: start + chars + check + stop, 11 modules each, +2 for the stop bar.
+const code128Width = (data, module) => ((data.length + 3) * 11 + 2) * module;
 
 // Code 39 encodes a fixed set only; anything else silently prints a broken barcode.
 const CODE39 = /^[0-9A-Z\-. $/+%]*$/;
@@ -121,9 +128,9 @@ export function validate({ article, description, serial, stripS }) {
   return { errors, art, sn, snBar, artFit, snFit };
 }
 
-export function validateAsics({ device = 'IPD', sequence }) {
+export function validateAsics({ device = 'DTC', sequence }) {
   const errors = [];
-  const deviceCode = ASICS_DEVICES[device] ? device : 'IPD';
+  const deviceCode = ASICS_DEVICES[device] ? device : 'DTC';
   const raw = String(sequence == null ? '' : sequence).trim();
   const validSequence = /^\d{1,6}$/.test(raw) && Number(raw) >= 1 && Number(raw) <= 999999;
 
@@ -166,10 +173,14 @@ function buildAsicsZpl({ device, sequence, darkness }) {
   const out = ['^XA', '^CI28', `^PW${LABEL_W}`, `^LL${LABEL_H}`, '^LH0,0', '^MMT'];
   if (darkness != null && darkness !== '') out.push(`~SD${String(darkness).padStart(2, '0')}`);
 
-  out.push(`^FO${ASICS_LOGO_X},${ASICS_LOGO_Y}^GFA,${logo.totalBytes},${logo.totalBytes},${logo.bytesPerRow},${logo.data}^FS`);
-  out.push(`^FO0,76^A0N,32,32^FB${LABEL_W},1,0,C,0^FD${code}^FS`);
-  // Code 128 keeps the 16-character asset ID scan-friendly at 0.25 mm modules.
-  out.push(`^FO17,128^BY2,2,70^BCN,70,N,N,N^FD${code}^FS`);
+  const P = ASICS_PANEL, B = ASICS_BAR;
+  out.push(`^FO0,0^GB${LABEL_W},${LABEL_H},${LABEL_H},B^FS`);
+  // ^FR reverses the field over the black: white logo and white code.
+  out.push(`^FO${ASICS_LOGO_X},${ASICS_LOGO_Y}^FR^GFA,${logo.totalBytes},${logo.totalBytes},${logo.bytesPerRow},${logo.data}^FS`);
+  out.push(`^FO0,${ASICS_CODE_Y}^FR^A0N,${ASICS_CODE_SIZE},${ASICS_CODE_SIZE}^FB${LABEL_W},1,0,C,0^FD${code}^FS`);
+  out.push(`^FO${P.x},${P.y}^GB${P.w},${P.h},${P.h},W,2^FS`);
+  const barX = Math.round((LABEL_W - code128Width(code, B.module)) / 2);
+  out.push(`^FO${barX},${B.y}^BY${B.module},2,${B.h}^BCN,${B.h},N,N,N^FD${code}^FS`);
   out.push('^PQ1', '^XZ');
   return out.join('\n') + '\n';
 }
@@ -345,12 +356,14 @@ function previewNikeLogo() {
 function renderAsicsPreview({ device, sequence }) {
   const { errors, code } = validateAsics({ device, sequence });
   const FF = 'font-family:Helvetica,Arial,sans-serif;font-weight:700';
-  let s = `<rect width="${LABEL_W}" height="${LABEL_H}" fill="#fff"/>`;
-  s += `<image href="${CLIENTS.asics.logoPath}" x="${ASICS_LOGO_X}" y="${ASICS_LOGO_Y}" width="${ASICS_LOGO_W}" height="${ASICS_LOGO_H}" preserveAspectRatio="xMidYMid meet" style="filter:grayscale(1) brightness(0)"/>`;
-  s += `<text x="${LABEL_W / 2}" y="105" text-anchor="middle" style="${FF};font-size:32px">${esc(code)}</text>`;
+  const P = ASICS_PANEL, B = ASICS_BAR;
+  let s = `<rect width="${LABEL_W}" height="${LABEL_H}" fill="#000"/>`;
+  s += `<image href="${CLIENTS.asics.logoPath}" x="${ASICS_LOGO_X}" y="${ASICS_LOGO_Y}" width="${ASICS_LOGO_W}" height="${ASICS_LOGO_H}" preserveAspectRatio="xMidYMid meet" style="filter:grayscale(1) brightness(0) invert(1)"/>`;
+  s += `<text x="${LABEL_W / 2}" y="${ASICS_CODE_Y + Math.round(ASICS_CODE_SIZE * 0.86)}" text-anchor="middle" fill="#fff" style="${FF};font-size:${ASICS_CODE_SIZE}px">${esc(code)}</text>`;
+  s += `<rect x="${P.x}" y="${P.y}" width="${P.w}" height="${P.h}" rx="6" fill="#fff"/>`;
 
   if (!errors.length) {
-    const barcode = code128Bars(code, 17, 128, 70, 2);
+    const barcode = code128Bars(code, Math.round((LABEL_W - code128Width(code, B.module)) / 2), B.y, B.h, B.module);
     if (barcode) s += barcode.svg;
   }
 
